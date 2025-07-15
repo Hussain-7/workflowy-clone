@@ -11,6 +11,8 @@ const routes = [
   },
 ];
 
-export default routes.map((item) => 
-  item.path === "index" ? index(item.component) : route(item.path, item.component)
+export default routes.map((item) =>
+  item.path === "index"
+    ? index(item.component)
+    : route(item.path, item.component)
 ) satisfies RouteConfig;
