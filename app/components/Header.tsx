@@ -37,7 +37,7 @@ const Header = (props: Props) => {
           </button>
         </div>
         <button
-          className="p-2 rounded-md hover:bg-gray-100"
+          className="p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
           onClick={() => navigate("/")}
         >
           <FiHome className="w-5 h-5 text-gray-400" />
