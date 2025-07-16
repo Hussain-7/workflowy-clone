@@ -64,7 +64,7 @@ const OutlinerItem: React.FC<{
   return (
     <div
       className="outliner-item relative"
-      style={{ marginLeft: `${level * LEFT_MARGIN}px` }}
+      style={{ marginLeft: `${level === 0 ? 0 : LEFT_MARGIN}px` }}
     >
       {/* Only show connecting line if children are expanded */}
       {node.children.length > 0 && expanded && (
