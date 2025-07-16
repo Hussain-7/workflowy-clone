@@ -1,17 +1,18 @@
-import useOutliner, { type OutlinerNode } from "@/hooks/use-outliner";
+import useOutliner, { getAllNodesFlattened, type OutlinerNode } from "@/hooks/use-outliner";
 import { mainDocuments } from "~/constants/data";
 import OutlinerItem from "./OutlinerItem";
 
 type Props = {
   nodeId: string;
-  title: string;
-  rootId: string;
+  rootId?: string;
 };
 
-const OutlinePage = ({ nodeId, title, rootId }: Props) => {
-  const nodeData = mainDocuments.find(
+const OutlinePage = ({ nodeId, rootId }: Props) => {
+  // Can be fetched from the db
+  const flattenedData = getAllNodesFlattened(mainDocuments)
+  const nodeSelected = flattenedData.find(
     (doc) => doc.id === nodeId
-  ) as OutlinerNode;
+  ) as OutlinerNode; 
   const {
     nodes,
     handleAddChild,
@@ -19,11 +20,11 @@ const OutlinePage = ({ nodeId, title, rootId }: Props) => {
     handleEdit,
     handleToggleEdit,
     handleKeyDown,
-  } = useOutliner(nodeData.children || []);
+  } = useOutliner(nodeSelected?.children || []);
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-black">{title}</h1>
+      <h1 className="text-2xl font-bold text-black">{nodeSelected?.content || ""}</h1>
       <div className="outliner border-0 py-4 bg-white h-fit">
         {nodes.length === 0 ? (
           <div className="text-gray-500 italic">Loading content...</div>

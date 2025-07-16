@@ -11,6 +11,7 @@ import {
 } from "react-icons/fi";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { mainDocuments } from "~/constants/data";
+import { getAllNodesFlattened, type OutlinerNode } from "~/hooks/use-outliner";
 
 type Props = {};
 
@@ -19,8 +20,10 @@ const Header = (props: Props) => {
   // Add dynamic logic later
   const { id } = useParams();
   console.log("params", id);
-  const mainDocument = mainDocuments.find((doc) => doc.id === id);
-
+  const flattenedData = getAllNodesFlattened(mainDocuments)
+  const nodeSelected = flattenedData.find(
+    (doc) => doc.id === id
+  ) as OutlinerNode; 
   return (
     <div className="w-full border-b border-black/10 h-[50px] px-2 flex items-center justify-between">
       {/* Left side elements */}
@@ -42,12 +45,12 @@ const Header = (props: Props) => {
         >
           <FiHome className="w-5 h-5 text-gray-400" />
         </button>
-        {mainDocument && (
+        {nodeSelected && (
           <div className="flex items-center text-gray-400">
-            <div key={mainDocument?.id} className="flex items-center">
+            <div key={nodeSelected?.id} className="flex items-center">
               <FiChevronRightSeparator className="w-4 h-4" />
               <span className="mx-1.25 text-sm font-medium truncate">
-                {mainDocument?.content}
+                {nodeSelected?.content}
               </span>
             </div>
           </div>

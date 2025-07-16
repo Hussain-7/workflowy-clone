@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-
 // Define the structure of an outliner node
 export interface OutlinerNode {
   id: string;
@@ -9,6 +8,22 @@ export interface OutlinerNode {
   children: OutlinerNode[];
   isEditing?: boolean;
 }
+
+export const getAllNodesFlattened = ((nodes: OutlinerNode[]) => {
+  const flattenedNodes: OutlinerNode[] = [];
+
+  const traverseInOrder = (nodes: OutlinerNode[]) => {
+    for (let i = 0; i < nodes.length; i++) {
+      flattenedNodes.push(nodes[i]);
+      if (nodes[i].children.length > 0) {
+        traverseInOrder(nodes[i].children);
+      }
+    }
+  };
+
+  traverseInOrder(nodes);
+  return flattenedNodes;
+});
 
 const ROOT_ID = "node_sahfkashfksahfkshakfhsafhksahfk";
 
@@ -20,7 +35,9 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
     () => `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     []
   );
-
+  useEffect(()=>{
+    setNodes(default_nodes)
+  },[default_nodes])
   // Initial data structure with a root node
   const [nodes, setNodes] = useState<OutlinerNode[]>(
     default_nodes || [

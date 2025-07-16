@@ -92,9 +92,7 @@ const OutlinerItem: React.FC<{
         {/* Bullet point */}
         <div
           onClick={() => {
-            if (showMain) {
-              navigate(`/doc/${node.id}`);
-            }
+            navigate(`/doc/${node.id}`);
           }}
           className={`absolute left-0 top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center ${
             node.children.length > 0 && !expanded
