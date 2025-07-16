@@ -10,6 +10,8 @@ export interface OutlinerNode {
   isEditing?: boolean;
 }
 
+const ROOT_ID = "node_sahfkashfksahfkshakfhsafhksahfk";
+
 const useOutliner = () => {
   // Reference for currently focused node ID
   const activeNodeIdRef = useRef<string | null>(null);
@@ -22,7 +24,7 @@ const useOutliner = () => {
   // Initial data structure with a root node
   const [nodes, setNodes] = useState<OutlinerNode[]>([
     {
-      id: generateId(),
+      id: ROOT_ID,
       content: "",
       parent_id: null,
       children: [],
@@ -88,13 +90,99 @@ const useOutliner = () => {
     [nodes]
   );
 
+  // Get all nodes in flattened order for up/down navigation
+  const getAllNodesFlattened = useCallback(() => {
+    const flattenedNodes: OutlinerNode[] = [];
+
+    const traverseInOrder = (nodes: OutlinerNode[]) => {
+      for (let i = 0; i < nodes.length; i++) {
+        flattenedNodes.push(nodes[i]);
+        if (nodes[i].children.length > 0) {
+          traverseInOrder(nodes[i].children);
+        }
+      }
+    };
+
+    traverseInOrder(nodes);
+    return flattenedNodes;
+  }, [nodes]);
+
+  // Find the deepest last child of a node
+  const findDeepestLastChild = useCallback(
+    (node: OutlinerNode): OutlinerNode => {
+      if (node.children.length === 0) {
+        return node;
+      }
+
+      // Get last child
+      const lastChild = node.children[node.children.length - 1];
+
+      // Recursively find the deepest last child
+      return findDeepestLastChild(lastChild);
+    },
+    []
+  );
+
+  // Find the previous node in hierarchy for up arrow navigation
+  const findPreviousNodeInHierarchy = useCallback(
+    (nodeId: string): OutlinerNode | null => {
+      const flattenedNodes = getAllNodesFlattened();
+      const currentIndex = flattenedNodes.findIndex((n) => n.id === nodeId);
+
+      if (currentIndex === -1 || currentIndex <= 0) {
+        return null; // No previous node
+      }
+
+      return flattenedNodes[currentIndex - 1];
+    },
+    [getAllNodesFlattened]
+  );
+
+  // Find the next node in hierarchy for down arrow navigation
+  const findNextNodeInHierarchy = useCallback(
+    (nodeId: string): OutlinerNode | null => {
+      const flattenedNodes = getAllNodesFlattened();
+      const currentIndex = flattenedNodes.findIndex((n) => n.id === nodeId);
+
+      if (currentIndex === -1 || currentIndex >= flattenedNodes.length - 1) {
+        return null; // No next node
+      }
+
+      return flattenedNodes[currentIndex + 1];
+    },
+    [getAllNodesFlattened]
+  );
+
+  // Focus a specific node's textarea
+  const focusNodeTextarea = useCallback(
+    (nodeId: string, cursorPosition: "start" | "end" = "end") => {
+      setTimeout(() => {
+        const textarea = document.querySelector(
+          `[data-node-id="${nodeId}"]`
+        ) as HTMLTextAreaElement;
+
+        if (textarea) {
+          textarea.focus();
+          if (cursorPosition === "start") {
+            textarea.selectionStart = 0;
+            textarea.selectionEnd = 0;
+          } else {
+            textarea.selectionStart = textarea.value.length;
+            textarea.selectionEnd = textarea.value.length;
+          }
+        }
+      }, 0);
+    },
+    []
+  );
+
   // Add a new node at the root level or after a specific node
   const addNodeAfter = useCallback(
-    (afterId: string | null = null) => {
+    (afterId: string | null = null, content: string = "") => {
       const newNodeId = generateId();
       const newNode: OutlinerNode = {
         id: newNodeId,
-        content: "",
+        content: content,
         parent_id: null,
         children: [],
         isEditing: true,
@@ -103,7 +191,7 @@ const useOutliner = () => {
       // If afterId is null, add to the root level at the end
       if (afterId === null) {
         setNodes([...nodes, newNode]);
-        return;
+        return newNodeId;
       }
 
       // Find the node and its parent to insert after it
@@ -142,9 +230,68 @@ const useOutliner = () => {
 
       if (nodeFound) {
         setNodes(updatedNodes);
+        return newNodeId;
       }
+
+      return null;
     },
-    [nodes]
+    [nodes, generateId]
+  );
+
+  // Add a new node before a specific node
+  const addNodeBefore = useCallback(
+    (beforeId: string, content: string = "") => {
+      const newNodeId = generateId();
+      const newNode: OutlinerNode = {
+        id: newNodeId,
+        content: content,
+        parent_id: null,
+        children: [],
+        isEditing: true,
+      };
+
+      // Find the node to insert before
+      const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+      let nodeFound = false;
+
+      // Helper to insert node before specified id at the same level
+      const insertNodeBefore = (
+        nodes: OutlinerNode[],
+        targetId: string
+      ): boolean => {
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].id === targetId) {
+            // Found the node, insert before it at the same level
+            newNode.parent_id = nodes[i].parent_id;
+            nodes.splice(i, 0, newNode);
+            return true;
+          }
+
+          // Check children
+          if (nodes[i].children.length > 0) {
+            const foundInChildren = insertNodeBefore(
+              nodes[i].children,
+              targetId
+            );
+            if (foundInChildren) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      };
+
+      nodeFound = insertNodeBefore(updatedNodes, beforeId);
+
+      if (nodeFound) {
+        setNodes(updatedNodes);
+        return newNodeId;
+      }
+
+      return null;
+    },
+    [nodes, generateId]
   );
 
   // Add a child node to a parent node
@@ -449,17 +596,135 @@ const useOutliner = () => {
     []
   );
 
-  // Handle Enter key - create new item
+  // Helper function to move children to a new parent node
+  const moveChildrenToNewParent = useCallback(
+    (sourceId: string, targetId: string) => {
+      const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+
+      // Find the source node to get its children
+      const findSourceNode = (nodes: OutlinerNode[]): OutlinerNode | null => {
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].id === sourceId) {
+            return nodes[i];
+          }
+
+          if (nodes[i].children.length > 0) {
+            const foundInChildren = findSourceNode(nodes[i].children);
+            if (foundInChildren) return foundInChildren;
+          }
+        }
+
+        return null;
+      };
+
+      // Find the target node to move children to
+      const moveChildrenTo = (
+        nodes: OutlinerNode[],
+        children: OutlinerNode[]
+      ): boolean => {
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].id === targetId) {
+            // Move all children to the target node
+            nodes[i].children = [...children];
+            // Update parent_id of all moved children
+            for (let child of nodes[i].children) {
+              child.parent_id = targetId;
+            }
+            return true;
+          }
+
+          if (nodes[i].children.length > 0) {
+            const movedToChild = moveChildrenTo(nodes[i].children, children);
+            if (movedToChild) return true;
+          }
+        }
+
+        return false;
+      };
+
+      const sourceNode = findSourceNode(updatedNodes);
+
+      if (sourceNode && sourceNode.children.length > 0) {
+        const childrenToMove = [...sourceNode.children];
+        // Clear children from source node
+        sourceNode.children = [];
+
+        if (moveChildrenTo(updatedNodes, childrenToMove)) {
+          setNodes(updatedNodes);
+          return true;
+        }
+      }
+
+      return false;
+    },
+    [nodes]
+  );
+
+  // Handle Enter key - create new item with different behaviors based on cursor position
   useHotkeys(
     "enter",
     (e) => {
       e.preventDefault();
-      if (activeNodeIdRef.current) {
-        addNodeAfter(activeNodeIdRef.current);
+      if (!activeNodeIdRef.current) return;
+
+      const targetEl = e.target as HTMLTextAreaElement;
+      const cursorPosition = targetEl.selectionStart;
+      const nodeContent = targetEl.value;
+
+      // Get the current node
+      const [currentNode] = findNode(nodes, activeNodeIdRef.current);
+      if (!currentNode) return;
+
+      // Case 1: Cursor at beginning - add node above
+      if (cursorPosition === 0) {
+        const newNodeId = addNodeBefore(activeNodeIdRef.current);
+        if (newNodeId) {
+          setTimeout(() => {
+            focusNodeTextarea(newNodeId);
+          }, 0);
+        }
+      }
+      // Case 2: Cursor at the end - add node after (existing behavior)
+      else if (cursorPosition === nodeContent.length) {
+        const newNodeId = addNodeAfter(activeNodeIdRef.current);
+        if (newNodeId) {
+          setTimeout(() => {
+            focusNodeTextarea(newNodeId);
+          }, 0);
+        }
+      }
+      // Case 3: Cursor in the middle - split content and move children
+      else {
+        const leftContent = nodeContent.substring(0, cursorPosition);
+        const rightContent = nodeContent.substring(cursorPosition);
+
+        // Update current node with left content
+        handleEdit(activeNodeIdRef.current, leftContent);
+
+        // Create new node with right content
+        const newNodeId = addNodeAfter(activeNodeIdRef.current, rightContent);
+
+        if (newNodeId && currentNode.children.length > 0) {
+          // Move children from current node to the new node
+          moveChildrenToNewParent(activeNodeIdRef.current, newNodeId);
+        }
+
+        if (newNodeId) {
+          setTimeout(() => {
+            focusNodeTextarea(newNodeId);
+          }, 0);
+        }
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [addNodeAfter]
+    [
+      addNodeAfter,
+      addNodeBefore,
+      handleEdit,
+      findNode,
+      focusNodeTextarea,
+      moveChildrenToNewParent,
+    ]
   );
 
   // Handle Tab key - indent (make current node child of previous node)
@@ -474,10 +739,10 @@ const useOutliner = () => {
         activeNodeIdRef.current
       );
       if (!currentNode) return;
-      
+
       // Cannot indent root level item without siblings or first item in list
       if (indexInParent <= 0) return;
-      
+
       // Make this node a child of previous sibling
       const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
 
@@ -591,6 +856,56 @@ const useOutliner = () => {
     },
     { enableOnFormTags: ["TEXTAREA"] },
     [findNode, findPreviousNode, handleDelete, nodes]
+  );
+
+  // Handle Up Arrow - navigate to previous node
+  useHotkeys(
+    "up",
+    (e) => {
+      if (!activeNodeIdRef.current) return;
+      const targetEl = e.target as HTMLTextAreaElement;
+      console.log(
+        "activeNodeIdRef.current",
+        targetEl.selectionStart,
+        activeNodeIdRef.current
+      );
+
+      // Only navigate if cursor is at the beginning of the textarea
+      if (targetEl.selectionStart === 0) {
+        const previousNode = findPreviousNodeInHierarchy(
+          activeNodeIdRef.current
+        );
+        console.log("previousNode", previousNode);
+
+        if (previousNode) {
+          e.preventDefault();
+          focusNodeTextarea(previousNode.id, "start");
+        }
+      }
+    },
+    { enableOnFormTags: ["TEXTAREA"] },
+    [findPreviousNodeInHierarchy, focusNodeTextarea]
+  );
+
+  // Handle Down Arrow - navigate to next node
+  useHotkeys(
+    "down",
+    (e) => {
+      if (!activeNodeIdRef.current) return;
+      const targetEl = e.target as HTMLTextAreaElement;
+
+      // Only navigate if cursor is at the end of the textarea
+      if (targetEl.selectionStart === targetEl.value.length) {
+        const nextNode = findNextNodeInHierarchy(activeNodeIdRef.current);
+
+        if (nextNode) {
+          e.preventDefault();
+          focusNodeTextarea(nextNode.id, "start");
+        }
+      }
+    },
+    { enableOnFormTags: ["TEXTAREA"] },
+    [findNextNodeInHierarchy, focusNodeTextarea]
   );
 
   // Start with a single node if there are none
