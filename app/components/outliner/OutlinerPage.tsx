@@ -2,9 +2,12 @@ import React from "react";
 import OutlinerItem from "@/components/outliner/OutlinerItem";
 import useOutliner from "@/hooks/use-outliner";
 
-type Props = {};
+type Props = {
+  id: string;
+  title: string;
+};
 
-const OutlinerPage = (props: Props) => {
+const OutlinerPage = ({ id, title }: Props) => {
   const {
     nodes,
     handleAddChild,
