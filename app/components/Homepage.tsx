@@ -1,4 +1,3 @@
-import { SimpleEditor } from "~/components/tiptap-templates/simple/simple-editor";
 import Header from "./Header";
 import Content from "./Content";
 
