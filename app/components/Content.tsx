@@ -58,7 +58,7 @@ const OutlinerItem: React.FC<{
 
   return (
     <div className="outliner-item" style={{ marginLeft: `${level * 20}px` }}>
-      <div className="relative pl-6 flex items-center justify-center">
+      <div className="relative pl-6 flex items-center justify-center mt-1">
         {/* Bullet point */}
         <div className="absolute left-0 top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:bg-gray-200 hover:cursor-pointer rounded-full transition-colors">
           <FaCircle className="w-2 h-2 aspect-square text-gray-700" />
@@ -78,7 +78,7 @@ const OutlinerItem: React.FC<{
           data-node-id={node.id}
           rows={1}
           style={{
-            lineHeight: "1.5",
+            lineHeight: "24px",
             margin: 0,
             padding: 0,
           }}
@@ -637,7 +637,7 @@ const Content = (props: Props) => {
 
   return (
     <div className="px-4 py-6 w-[90vw] md:w-[700px] mt-10 mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-black">Outliner</h1>
+      <h1 className="text-2xl font-bold text-black">Outliner</h1>
       <div className="outliner border-0 py-4 bg-white h-fit">
         {nodes.length === 0 ? (
           <div className="text-gray-500 italic">Loading outliner...</div>

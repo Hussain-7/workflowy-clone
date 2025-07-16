@@ -1,9 +1,75 @@
-import React from "react";
+import {
+  FiMenu,
+  FiChevronLeft,
+  FiChevronRight,
+  FiHome,
+  FiChevronRight as FiChevronRightSeparator,
+  FiSearch,
+  FiShare2,
+  FiStar,
+  FiList,
+} from "react-icons/fi";
 
 type Props = {};
 
 const Header = (props: Props) => {
-  return <div className="w-full border-b border-black/10 h-[50px]"></div>;
+  // Add dynamic logic later
+  const navigation = ["Home", "Outliner"];
+
+  return (
+    <div className="w-full border-b border-black/10 h-[50px] px-2 flex items-center justify-between">
+      {/* Left side elements */}
+      <div className="flex items-center space-x-2">
+        <button className="p-2 rounded-md hover:bg-gray-100">
+          <FiMenu className="w-5 h-5 text-gray-400" />
+        </button>
+        <div className="flex items-center space-x-1">
+          <button className="p-2 rounded-md hover:bg-gray-100">
+            <FiChevronLeft className="w-5 h-5 text-gray-400" />
+          </button>
+          <button className="p-2 rounded-md hover:bg-gray-100">
+            <FiChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <button className="p-2 rounded-md hover:bg-gray-100">
+          <FiHome className="w-5 h-5 text-gray-400" />
+        </button>
+        <div className="flex items-center text-gray-400">
+          {navigation.map((item) => (
+            <>
+              <FiChevronRightSeparator className="w-4 h-4" />
+              <span className="mx-1.25 text-sm font-medium truncate">
+                {item}
+              </span>
+            </>
+          ))}
+        </div>
+      </div>
+
+      {/* Right side elements */}
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <div className="flex items-center bg-gray-100 rounded-md px-3 py-1.5">
+            <FiSearch className="w-4 h-4 text-gray-500 mr-2" />
+            <input
+              type="text"
+              placeholder="Search"
+              className="bg-transparent border-none outline-none text-sm w-24 placeholder-gray-500"
+            />
+          </div>
+        </div>
+        <button className="p-1.5 rounded-md hover:bg-gray-100">
+          <FiShare2 className="w-4 h-4 text-gray-600" />
+        </button>
+        <button className="p-1.5 rounded-md hover:bg-gray-100">
+          <FiStar className="w-4 h-4 text-gray-600" />
+        </button>
+        <button className="p-1.5 rounded-md hover:bg-gray-100">
+          <FiList className="w-4 h-4 text-gray-600" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Header;
