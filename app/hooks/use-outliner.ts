@@ -12,7 +12,7 @@ export interface OutlinerNode {
 
 const ROOT_ID = "node_sahfkashfksahfkshakfhsafhksahfk";
 
-const useOutliner = () => {
+const useOutliner = (default_nodes: OutlinerNode[]) => {
   // Reference for currently focused node ID
   const activeNodeIdRef = useRef<string | null>(null);
 
@@ -22,14 +22,16 @@ const useOutliner = () => {
   );
 
   // Initial data structure with a root node
-  const [nodes, setNodes] = useState<OutlinerNode[]>([
-    {
-      id: ROOT_ID,
-      content: "",
-      parent_id: null,
-      children: [],
-    },
-  ]);
+  const [nodes, setNodes] = useState<OutlinerNode[]>(
+    default_nodes || [
+      {
+        id: ROOT_ID,
+        content: "",
+        parent_id: null,
+        children: [],
+      },
+    ]
+  );
 
   console.log("Nodes", JSON.stringify(nodes));
 
@@ -624,8 +626,8 @@ const useOutliner = () => {
   // Helper function to move children from one node to another within a nodes tree
   // This doesn't update state, just manipulates the tree
   const moveChildrenBetweenNodes = (
-    nodes: OutlinerNode[], 
-    sourceId: string, 
+    nodes: OutlinerNode[],
+    sourceId: string,
     targetId: string
   ): boolean => {
     // Find the source node to get its children
@@ -680,7 +682,7 @@ const useOutliner = () => {
 
     return false;
   };
-  
+
   // Public function that updates state after moving children
   const moveChildrenToNewParent = useCallback(
     (sourceId: string, targetId: string) => {
@@ -844,16 +846,22 @@ const useOutliner = () => {
         const rightContent = nodeContent.substring(cursorPosition);
 
         // Create a deep copy of the nodes to work with
-        const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-        
+        const updatedNodes = JSON.parse(
+          JSON.stringify(nodes)
+        ) as OutlinerNode[];
+
         // Step 1: Update current node with left content
-        const updateNodeContent = (nodes: OutlinerNode[], id: string, content: string): boolean => {
+        const updateNodeContent = (
+          nodes: OutlinerNode[],
+          id: string,
+          content: string
+        ): boolean => {
           for (let i = 0; i < nodes.length; i++) {
             if (nodes[i].id === id) {
               nodes[i].content = content;
               return true;
             }
-            
+
             if (nodes[i].children.length > 0) {
               const updated = updateNodeContent(nodes[i].children, id, content);
               if (updated) return true;
@@ -861,9 +869,9 @@ const useOutliner = () => {
           }
           return false;
         };
-        
+
         updateNodeContent(updatedNodes, activeNodeIdRef.current, leftContent);
-        
+
         // Step 2: Create a new node with right content
         const newNodeId = generateId();
         const newNode: OutlinerNode = {
@@ -873,15 +881,18 @@ const useOutliner = () => {
           children: [],
           isEditing: true,
         };
-        
+
         // Step 3: Insert new node after current node
-        const insertNodeAfter = (nodes: OutlinerNode[], targetId: string): boolean => {
+        const insertNodeAfter = (
+          nodes: OutlinerNode[],
+          targetId: string
+        ): boolean => {
           for (let i = 0; i < nodes.length; i++) {
             if (nodes[i].id === targetId) {
               nodes.splice(i + 1, 0, newNode);
               return true;
             }
-            
+
             if (nodes[i].children.length > 0) {
               const inserted = insertNodeAfter(nodes[i].children, targetId);
               if (inserted) return true;
@@ -889,18 +900,22 @@ const useOutliner = () => {
           }
           return false;
         };
-        
+
         insertNodeAfter(updatedNodes, activeNodeIdRef.current);
-        
+
         // Step 4: Move children if needed (using the shared helper function)
         if (currentNode.children.length > 0) {
           // Use the extracted helper function to move children
-          moveChildrenBetweenNodes(updatedNodes, activeNodeIdRef.current, newNodeId);
+          moveChildrenBetweenNodes(
+            updatedNodes,
+            activeNodeIdRef.current,
+            newNodeId
+          );
         }
-        
+
         // Apply all changes in one update
         setNodes(updatedNodes);
-        
+
         // Focus the new node after the DOM update
         setTimeout(() => {
           focusNodeTextarea(newNodeId);

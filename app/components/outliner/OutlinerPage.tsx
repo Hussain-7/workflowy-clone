@@ -1,5 +1,6 @@
-import OutlinerItem from "@/components/outliner/OutlinerItem";
-import useOutliner from "@/hooks/use-outliner";
+import useOutliner, { type OutlinerNode } from "@/hooks/use-outliner";
+import { mainDocuments } from "~/constants/data";
+import OutlinerItem from "./OutlinerItem";
 
 type Props = {
   nodeId: string;
@@ -8,6 +9,9 @@ type Props = {
 };
 
 const OutlinePage = ({ nodeId, title, rootId }: Props) => {
+  const nodeData = mainDocuments.find(
+    (doc) => doc.id === nodeId
+  ) as OutlinerNode;
   const {
     nodes,
     handleAddChild,
@@ -15,7 +19,7 @@ const OutlinePage = ({ nodeId, title, rootId }: Props) => {
     handleEdit,
     handleToggleEdit,
     handleKeyDown,
-  } = useOutliner();
+  } = useOutliner(nodeData.children || []);
 
   return (
     <>
@@ -35,6 +39,7 @@ const OutlinePage = ({ nodeId, title, rootId }: Props) => {
               onKeyDown={handleKeyDown}
               level={0}
               isLastNode={index === nodes.length - 1}
+              showMain={false}
             />
           ))
         )}

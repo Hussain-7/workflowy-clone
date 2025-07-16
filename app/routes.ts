@@ -5,6 +5,10 @@ const routes = [
     path: "index",
     component: "routes/index.tsx",
   },
+  {
+    path: "doc/:id",
+    component: "routes/doc/[id]/index.tsx",
+  },
 ];
 
 export default routes.map((item) =>

@@ -5,6 +5,7 @@ import {
   IoChevronForward,
   IoTriangleSharp,
 } from "react-icons/io5";
+import { useNavigate } from "react-router";
 import type { OutlinerNode } from "~/hooks/use-outliner";
 const LEFT_MARGIN = 35;
 // OutlinerItem component for recursive rendering
@@ -17,6 +18,7 @@ const OutlinerItem: React.FC<{
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
+  showMain: boolean;
 }> = ({
   node,
   onAddChild,
@@ -26,13 +28,16 @@ const OutlinerItem: React.FC<{
   onKeyDown,
   level,
   isLastNode,
+  showMain,
 }) => {
+  const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // State to track whether children are expanded or collapsed
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(showMain ? false : true);
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
+    if (showMain) return;
     e.stopPropagation();
     setExpanded(!expanded);
   };
@@ -86,6 +91,11 @@ const OutlinerItem: React.FC<{
         )}
         {/* Bullet point */}
         <div
+          onClick={() => {
+            if (showMain) {
+              navigate(`/doc/${node.id}`);
+            }
+          }}
           className={`absolute left-0 top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center ${
             node.children.length > 0 && !expanded
               ? "bg-gray-200 hover:cursor-pointer"
@@ -129,6 +139,7 @@ const OutlinerItem: React.FC<{
               onKeyDown={onKeyDown}
               level={level + 1}
               isLastNode={index === node.children.length - 1}
+              showMain={showMain}
             />
           ))}
         </div>

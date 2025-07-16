@@ -9,12 +9,17 @@ import {
   FiStar,
   FiList,
 } from "react-icons/fi";
+import { useLocation, useNavigate, useParams } from "react-router";
+import { mainDocuments } from "~/constants/data";
 
 type Props = {};
 
 const Header = (props: Props) => {
+  const navigate = useNavigate();
   // Add dynamic logic later
-  const navigation = ["Home", "Outliner"];
+  const { id } = useParams();
+  console.log("params", id);
+  const mainDocument = mainDocuments.find((doc) => doc.id === id);
 
   return (
     <div className="w-full border-b border-black/10 h-[50px] px-2 flex items-center justify-between">
@@ -31,19 +36,22 @@ const Header = (props: Props) => {
             <FiChevronRight className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-        <button className="p-2 rounded-md hover:bg-gray-100">
+        <button
+          className="p-2 rounded-md hover:bg-gray-100"
+          onClick={() => navigate("/")}
+        >
           <FiHome className="w-5 h-5 text-gray-400" />
         </button>
-        <div className="flex items-center text-gray-400">
-          {navigation.map((item) => (
-            <div key={item} className="flex items-center">
+        {mainDocument && (
+          <div className="flex items-center text-gray-400">
+            <div key={mainDocument?.id} className="flex items-center">
               <FiChevronRightSeparator className="w-4 h-4" />
               <span className="mx-1.25 text-sm font-medium truncate">
-                {item}
+                {mainDocument?.content}
               </span>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Right side elements */}
