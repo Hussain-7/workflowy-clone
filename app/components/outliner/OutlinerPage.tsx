@@ -1,13 +1,13 @@
-import React from "react";
 import OutlinerItem from "@/components/outliner/OutlinerItem";
 import useOutliner from "@/hooks/use-outliner";
 
 type Props = {
-  id: string;
+  nodeId: string;
   title: string;
+  rootId: string;
 };
 
-const OutlinerPage = ({ id, title }: Props) => {
+const OutlinePage = ({ nodeId, title, rootId }: Props) => {
   const {
     nodes,
     handleAddChild,
@@ -19,10 +19,10 @@ const OutlinerPage = ({ id, title }: Props) => {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-black">Outliner</h1>
+      <h1 className="text-2xl font-bold text-black">{title}</h1>
       <div className="outliner border-0 py-4 bg-white h-fit">
         {nodes.length === 0 ? (
-          <div className="text-gray-500 italic">Loading outliner...</div>
+          <div className="text-gray-500 italic">Loading content...</div>
         ) : (
           nodes.map((node, index) => (
             <OutlinerItem
@@ -43,4 +43,4 @@ const OutlinerPage = ({ id, title }: Props) => {
   );
 };
 
-export default OutlinerPage;
+export default OutlinePage;

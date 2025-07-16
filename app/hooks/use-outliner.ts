@@ -433,14 +433,11 @@ const useOutliner = () => {
       parentId: string | null,
       nodeId: string
     ): OutlinerNode | null => {
-      console.log("removeNodeFromParent - parentId:", parentId, "nodeId:", nodeId);
       // If it's root level
       if (parentId === null) {
         const index = nodes.findIndex((n) => n.id === nodeId);
-        console.log("Root level removal, index:", index);
         if (index !== -1) {
           const removed = nodes.splice(index, 1)[0];
-          console.log("Removed from root:", removed);
           return removed;
         }
       } else {
@@ -448,10 +445,8 @@ const useOutliner = () => {
         for (let i = 0; i < nodes.length; i++) {
           if (nodes[i].id === parentId) {
             const index = nodes[i].children.findIndex((n) => n.id === nodeId);
-            console.log("Found parent, child index:", index);
             if (index !== -1) {
               const removed = nodes[i].children.splice(index, 1)[0];
-              console.log("Removed from parent:", removed);
               return removed;
             }
           }
@@ -463,14 +458,12 @@ const useOutliner = () => {
               nodeId
             );
             if (removed) {
-              console.log("Removed from nested children:", removed);
               return removed;
             }
           }
         }
       }
 
-      console.log("Failed to remove node");
       return null;
     },
     []
@@ -547,21 +540,15 @@ const useOutliner = () => {
       grandParentId: string | null,
       nodeToAdd: OutlinerNode
     ): boolean => {
-      console.log("addNodeAfterParent - parentId:", parentId);
-      console.log("grandParentId:", grandParentId);
-      console.log("nodeToAdd:", nodeToAdd);
-      
       if (grandParentId === null) {
-        // Parent is at root level
+        // Parent is at root level, which means we're adding the node as a root node
         const parentIndex = nodes.findIndex((n) => n.id === parentId);
-        console.log("Parent is at root level, index:", parentIndex);
-        
+
         if (parentIndex !== -1) {
-          // Set correct parent_id for the node to add
+          // Set correct parent_id for the node to add - null means it's a root node
           nodeToAdd.parent_id = null;
           // Add node after parent at root level
           nodes.splice(parentIndex + 1, 0, nodeToAdd);
-          console.log("Added at root level after parent");
           return true;
         }
         return false;
@@ -571,15 +558,15 @@ const useOutliner = () => {
       const rootGrandparent = nodes.find((n) => n.id === grandParentId);
       if (rootGrandparent) {
         // Found grandparent at root level
-        const parentIndex = rootGrandparent.children.findIndex((n) => n.id === parentId);
-        console.log("Found grandparent at root, parent index:", parentIndex);
-        
+        const parentIndex = rootGrandparent.children.findIndex(
+          (n) => n.id === parentId
+        );
+
         if (parentIndex !== -1) {
           // Set correct parent_id for the node to add
           nodeToAdd.parent_id = grandParentId;
           // Add node after parent in grandparent's children
           rootGrandparent.children.splice(parentIndex + 1, 0, nodeToAdd);
-          console.log("Added after parent in root grandparent's children");
           return true;
         }
       }
@@ -589,15 +576,15 @@ const useOutliner = () => {
         // Check if this node is the grandparent
         if (nodes[i].id === grandParentId) {
           // Found grandparent, add the node after the parent
-          const parentIndex = nodes[i].children.findIndex((n) => n.id === parentId);
-          console.log("Found grandparent in tree, parent index:", parentIndex);
-          
+          const parentIndex = nodes[i].children.findIndex(
+            (n) => n.id === parentId
+          );
+
           if (parentIndex !== -1) {
             // Set correct parent_id for the node to add
             nodeToAdd.parent_id = grandParentId;
             // Add node after parent in grandparent's children
             nodes[i].children.splice(parentIndex + 1, 0, nodeToAdd);
-            console.log("Added after parent in grandparent's children");
             return true;
           }
         }
@@ -612,22 +599,15 @@ const useOutliner = () => {
               nodeToAdd
             )
           ) {
-            console.log("Added in nested children");
             return true;
           }
         }
       }
 
-      console.log("Failed to add node after parent");
       return false;
     },
     []
   );
-
-  // Handle focusing on a node to track active node ID
-  const handleFocus = useCallback((nodeId: string) => {
-    activeNodeIdRef.current = nodeId;
-  }, []);
 
   // Handle keyboard event to maintain compatibility with component props
   const handleKeyDown = useCallback(
@@ -704,56 +684,107 @@ const useOutliner = () => {
     [nodes]
   );
 
-  // Helper function to unindent a node (move to parent's level)
-  const unindentNode = useCallback(
-    (nodeId: string): boolean => {
-      console.log("Attempting to unindent node:", nodeId);
-      const [currentNode, parentNode, indexInParent] = findNode(nodes, nodeId);
-      console.log("Current node:", currentNode);
-      console.log("Parent node:", parentNode);
-      
-      // Can't unindent if no parent or at root level already
-      if (!currentNode || !parentNode || parentNode.parent_id === null) {
-        console.log("Cannot unindent: no parent or at root level");
-        return false;
+  // Helper function to indent a node (move to child's level)
+  const indentNode = useCallback(() => {
+    if (!activeNodeIdRef.current) return;
+
+    const [currentNode, parentNode, indexInParent] = findNode(
+      nodes,
+      activeNodeIdRef.current
+    );
+    if (!currentNode) return;
+
+    // Cannot indent root level item without siblings or first item in list
+    if (indexInParent <= 0) return;
+
+    // Make this node a child of previous sibling
+    const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+
+    // Get previous sibling in same parent
+    const prevSiblingId = getPreviousSiblingId(
+      clonedNodes,
+      parentNode?.id || null,
+      activeNodeIdRef.current
+    );
+
+    if (!prevSiblingId) return;
+
+    // Remove node from its current parent
+    const nodeToMove = removeNodeFromParent(
+      clonedNodes,
+      parentNode?.id || null,
+      activeNodeIdRef.current
+    );
+
+    // Add as child of previous sibling
+    if (nodeToMove) {
+      if (addNodeToParent(clonedNodes, prevSiblingId, nodeToMove)) {
+        setNodes(clonedNodes);
       }
-      
-      console.log("Parent node's parent ID:", parentNode.parent_id);
-      
-      // Create a deep copy to avoid mutation issues
-      const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-      
+    }
+  }, [
+    nodes,
+    addNodeToParent,
+    removeNodeFromParent,
+    findNode,
+    getPreviousSiblingId,
+    setNodes,
+  ]);
+
+  // Helper function to unindent a node (move to parent's level)
+  const unIndentNode = useCallback(() => {
+    if (!activeNodeIdRef.current) return;
+    // Implement unindent directly to ensure it works properly
+    // Create a copy of the node tree to avoid mutation issues
+    const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+
+    // Find the current node and its parent in the cloned tree
+    const [clonedNode, clonedParent, indexInParent] = findNode(
+      clonedNodes,
+      activeNodeIdRef.current
+    );
+
+    // If we have a node and a parent, we can unindent
+    if (clonedNode && clonedParent) {
+
       // Remove node from its current parent
       const nodeToMove = removeNodeFromParent(
         clonedNodes,
-        parentNode.id,
-        nodeId
+        clonedParent.id,
+        activeNodeIdRef.current
       );
-      console.log("Node to move:", nodeToMove);
-      
+
       if (nodeToMove) {
-        // Add node after parent in grandparent's children
+
+        // Add node after parent in its parent's children list
+        // If parent is at root level (parent_id is null), then the node will become a root node
+        const parentId = clonedParent.id;
+        const grandParentId = clonedParent.parent_id; // Can be null for root-level parents
+
         const success = addNodeAfterParent(
           clonedNodes,
-          parentNode.id,
-          parentNode.parent_id,
+          parentId,
+          grandParentId,
           nodeToMove
         );
-        
-        console.log("Add node after parent success:", success);
-        
+
         if (success) {
-          console.log("Setting new nodes structure");
           setNodes(clonedNodes);
-          return true;
+
+          // Focus the unindented node after DOM update
+          setTimeout(() => {
+            focusNodeTextarea(activeNodeIdRef.current || "");
+          }, 0);
         }
       }
-      
-      console.log("Unindent failed");
-      return false;
-    },
-    [nodes, findNode, removeNodeFromParent, addNodeAfterParent]
-  );
+    } 
+  }, [
+    nodes,
+    findNode,
+    removeNodeFromParent,
+    addNodeAfterParent,
+    focusNodeTextarea,
+  ]);
 
   // Handle Enter key - create new item with different behaviors based on cursor position
   useHotkeys(
@@ -767,74 +798,20 @@ const useOutliner = () => {
       const nodeContent = targetEl.value;
 
       // Get the current node
-      const [currentNode, parentNode] = findNode(nodes, activeNodeIdRef.current);
+      const [currentNode, parentNode] = findNode(
+        nodes,
+        activeNodeIdRef.current
+      );
       if (!currentNode) return;
 
       // Special case: If node is empty, and not at root level, unindent it (same as Shift+Tab)
       if (nodeContent.trim() === "") {
-        console.log("Enter pressed on empty node:", activeNodeIdRef.current);
-        // Check if node is at root level (has no parent or parent_id is null)
-        const isRootLevel = !parentNode || parentNode.parent_id === null;
-        console.log("Is root level node:", isRootLevel);
-        
-        if (!isRootLevel) {
-          // If not at root level, unindent instead of creating a new node
-          console.log("Attempting to unindent on Enter key");
-          
-          // Create a copy of the node tree to avoid mutation issues
-          const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-          
-          // Find the current node and its parent in the cloned tree
-          const [clonedNode, clonedParent, indexInParent] = findNode(
-            clonedNodes, 
-            activeNodeIdRef.current
-          );
-          
-          if (clonedNode && clonedParent && clonedParent.parent_id !== null) {
-            console.log("Found node and parent in cloned tree");
-            
-            // Remove node from its current parent
-            const nodeToMove = removeNodeFromParent(
-              clonedNodes,
-              clonedParent.id,
-              activeNodeIdRef.current
-            );
-            
-            if (nodeToMove) {
-              console.log("Successfully removed node from parent");
-              // Add node after parent in grandparent's children
-              // Handle the case where parent_id might be null by providing a fallback
-              const parentId = clonedParent.id;
-              const grandParentId = clonedParent.parent_id || "";
-              
-              const success = addNodeAfterParent(
-                clonedNodes,
-                parentId,
-                grandParentId, // We've already checked it's not null above
-                nodeToMove
-              );
-              
-              if (success) {
-                console.log("Successfully added node after parent");
-                setNodes(clonedNodes);
-                
-                // Focus the unindented node after DOM update
-                setTimeout(() => {
-                  focusNodeTextarea(activeNodeIdRef.current || '');
-                }, 0);
-              }
-            }
-          }
-          return;
-        }
-        
-        // At root level with empty content - do nothing
-        console.log("Empty root level node - doing nothing");
+        unIndentNode();
         return;
       }
-      
+
       // Only proceed to add new nodes if the current node has content
-      
+
       // Case 1: Cursor at beginning - add node above
       if (cursorPosition === 0) {
         const newNodeId = addNodeBefore(activeNodeIdRef.current);
@@ -884,7 +861,7 @@ const useOutliner = () => {
       findNode,
       focusNodeTextarea,
       moveChildrenToNewParent,
-      unindentNode,
+      unIndentNode,
     ]
   );
 
@@ -893,51 +870,10 @@ const useOutliner = () => {
     "tab",
     (e) => {
       e.preventDefault();
-      if (!activeNodeIdRef.current) return;
-
-      const [currentNode, parentNode, indexInParent] = findNode(
-        nodes,
-        activeNodeIdRef.current
-      );
-      if (!currentNode) return;
-
-      // Cannot indent root level item without siblings or first item in list
-      if (indexInParent <= 0) return;
-
-      // Make this node a child of previous sibling
-      const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-
-      // Get previous sibling in same parent
-      const prevSiblingId = getPreviousSiblingId(
-        clonedNodes,
-        parentNode?.id || null,
-        activeNodeIdRef.current
-      );
-
-      if (!prevSiblingId) return;
-
-      // Remove node from its current parent
-      const nodeToMove = removeNodeFromParent(
-        clonedNodes,
-        parentNode?.id || null,
-        activeNodeIdRef.current
-      );
-
-      // Add as child of previous sibling
-      if (nodeToMove) {
-        if (addNodeToParent(clonedNodes, prevSiblingId, nodeToMove)) {
-          setNodes(clonedNodes);
-        }
-      }
+      indentNode();
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [
-      findNode,
-      getPreviousSiblingId,
-      removeNodeFromParent,
-      addNodeToParent,
-      nodes,
-    ]
+    [indentNode]
   );
 
   // Handle Shift+Tab - unindent (move to parent's level)
@@ -945,59 +881,10 @@ const useOutliner = () => {
     "shift+tab",
     (e) => {
       e.preventDefault();
-      if (!activeNodeIdRef.current) return;
-      
-      console.log("Shift+Tab pressed on node:", activeNodeIdRef.current);
-      
-      // Implement unindent directly to ensure it works properly
-      // Create a copy of the node tree to avoid mutation issues
-      const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-      
-      // Find the current node and its parent in the cloned tree
-      const [clonedNode, clonedParent, indexInParent] = findNode(
-        clonedNodes, 
-        activeNodeIdRef.current
-      );
-      
-      if (clonedNode && clonedParent && clonedParent.parent_id !== null) {
-        console.log("Found node and parent in cloned tree");
-        
-        // Remove node from its current parent
-        const nodeToMove = removeNodeFromParent(
-          clonedNodes,
-          clonedParent.id,
-          activeNodeIdRef.current
-        );
-        
-        if (nodeToMove) {
-          console.log("Successfully removed node from parent");
-          // Add node after parent in grandparent's children
-          const parentId = clonedParent.id;
-          const grandParentId = clonedParent.parent_id || ""; // Handle null case
-          
-          const success = addNodeAfterParent(
-            clonedNodes,
-            parentId,
-            grandParentId,
-            nodeToMove
-          );
-          
-          if (success) {
-            console.log("Successfully unindented on Shift+Tab");
-            setNodes(clonedNodes);
-            
-            // Focus the unindented node after DOM update
-            setTimeout(() => {
-              focusNodeTextarea(activeNodeIdRef.current || '');
-            }, 0);
-          }
-        }
-      } else {
-        console.log("Cannot unindent: no parent or at root level");
-      }
+      unIndentNode();
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [nodes, findNode, removeNodeFromParent, addNodeAfterParent, focusNodeTextarea]
+    [unIndentNode]
   );
 
   // Handle Backspace key - delete node if empty
@@ -1045,18 +932,12 @@ const useOutliner = () => {
     (e) => {
       if (!activeNodeIdRef.current) return;
       const targetEl = e.target as HTMLTextAreaElement;
-      console.log(
-        "activeNodeIdRef.current",
-        targetEl.selectionStart,
-        activeNodeIdRef.current
-      );
 
       // Only navigate if cursor is at the beginning of the textarea
       if (targetEl.selectionStart === 0) {
         const previousNode = findPreviousNodeInHierarchy(
           activeNodeIdRef.current
         );
-        console.log("previousNode", previousNode);
 
         if (previousNode) {
           e.preventDefault();
@@ -1112,7 +993,6 @@ const useOutliner = () => {
     handleEdit,
     handleToggleEdit,
     handleKeyDown,
-    handleFocus,
   };
 };
 
