@@ -36,12 +36,12 @@ const Header = (props: Props) => {
         </button>
         <div className="flex items-center text-gray-400">
           {navigation.map((item) => (
-            <>
+            <div key={item} className="flex items-center">
               <FiChevronRightSeparator className="w-4 h-4" />
               <span className="mx-1.25 text-sm font-medium truncate">
                 {item}
               </span>
-            </>
+            </div>
           ))}
         </div>
       </div>
