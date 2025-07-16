@@ -621,64 +621,74 @@ const useOutliner = () => {
   );
 
   // Helper function to move children to a new parent node
-  const moveChildrenToNewParent = useCallback(
-    (sourceId: string, targetId: string) => {
-      const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
-
-      // Find the source node to get its children
-      const findSourceNode = (nodes: OutlinerNode[]): OutlinerNode | null => {
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].id === sourceId) {
-            return nodes[i];
-          }
-
-          if (nodes[i].children.length > 0) {
-            const foundInChildren = findSourceNode(nodes[i].children);
-            if (foundInChildren) return foundInChildren;
-          }
+  // Helper function to move children from one node to another within a nodes tree
+  // This doesn't update state, just manipulates the tree
+  const moveChildrenBetweenNodes = (
+    nodes: OutlinerNode[], 
+    sourceId: string, 
+    targetId: string
+  ): boolean => {
+    // Find the source node to get its children
+    const findSourceNode = (nodes: OutlinerNode[]): OutlinerNode | null => {
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === sourceId) {
+          return nodes[i];
         }
 
-        return null;
-      };
-
-      // Find the target node to move children to
-      const moveChildrenTo = (
-        nodes: OutlinerNode[],
-        children: OutlinerNode[]
-      ): boolean => {
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].id === targetId) {
-            // Move all children to the target node
-            nodes[i].children = [...children];
-            // Update parent_id of all moved children
-            for (let child of nodes[i].children) {
-              child.parent_id = targetId;
-            }
-            return true;
-          }
-
-          if (nodes[i].children.length > 0) {
-            const movedToChild = moveChildrenTo(nodes[i].children, children);
-            if (movedToChild) return true;
-          }
-        }
-
-        return false;
-      };
-
-      const sourceNode = findSourceNode(updatedNodes);
-
-      if (sourceNode && sourceNode.children.length > 0) {
-        const childrenToMove = [...sourceNode.children];
-        // Clear children from source node
-        sourceNode.children = [];
-
-        if (moveChildrenTo(updatedNodes, childrenToMove)) {
-          setNodes(updatedNodes);
-          return true;
+        if (nodes[i].children.length > 0) {
+          const foundInChildren = findSourceNode(nodes[i].children);
+          if (foundInChildren) return foundInChildren;
         }
       }
 
+      return null;
+    };
+
+    // Find the target node to move children to
+    const moveChildrenTo = (
+      nodes: OutlinerNode[],
+      children: OutlinerNode[]
+    ): boolean => {
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === targetId) {
+          // Move all children to the target node
+          nodes[i].children = [...children];
+          // Update parent_id of all moved children
+          for (let child of nodes[i].children) {
+            child.parent_id = targetId;
+          }
+          return true;
+        }
+
+        if (nodes[i].children.length > 0) {
+          const movedToChild = moveChildrenTo(nodes[i].children, children);
+          if (movedToChild) return true;
+        }
+      }
+
+      return false;
+    };
+
+    const sourceNode = findSourceNode(nodes);
+
+    if (sourceNode && sourceNode.children.length > 0) {
+      const childrenToMove = [...sourceNode.children];
+      // Clear children from source node
+      sourceNode.children = [];
+      return moveChildrenTo(nodes, childrenToMove);
+    }
+
+    return false;
+  };
+  
+  // Public function that updates state after moving children
+  const moveChildrenToNewParent = useCallback(
+    (sourceId: string, targetId: string) => {
+      const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+      if (moveChildrenBetweenNodes(updatedNodes, sourceId, targetId)) {
+        setNodes(updatedNodes);
+        return true;
+      }
       return false;
     },
     [nodes]
@@ -746,7 +756,6 @@ const useOutliner = () => {
 
     // If we have a node and a parent, we can unindent
     if (clonedNode && clonedParent) {
-
       // Remove node from its current parent
       const nodeToMove = removeNodeFromParent(
         clonedNodes,
@@ -755,7 +764,6 @@ const useOutliner = () => {
       );
 
       if (nodeToMove) {
-
         // Add node after parent in its parent's children list
         // If parent is at root level (parent_id is null), then the node will become a root node
         const parentId = clonedParent.id;
@@ -777,7 +785,7 @@ const useOutliner = () => {
           }, 0);
         }
       }
-    } 
+    }
   }, [
     nodes,
     findNode,
@@ -835,22 +843,68 @@ const useOutliner = () => {
         const leftContent = nodeContent.substring(0, cursorPosition);
         const rightContent = nodeContent.substring(cursorPosition);
 
-        // Update current node with left content
-        handleEdit(activeNodeIdRef.current, leftContent);
-
-        // Create new node with right content
-        const newNodeId = addNodeAfter(activeNodeIdRef.current, rightContent);
-
-        if (newNodeId && currentNode.children.length > 0) {
-          // Move children from current node to the new node
-          moveChildrenToNewParent(activeNodeIdRef.current, newNodeId);
+        // Create a deep copy of the nodes to work with
+        const updatedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
+        
+        // Step 1: Update current node with left content
+        const updateNodeContent = (nodes: OutlinerNode[], id: string, content: string): boolean => {
+          for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].id === id) {
+              nodes[i].content = content;
+              return true;
+            }
+            
+            if (nodes[i].children.length > 0) {
+              const updated = updateNodeContent(nodes[i].children, id, content);
+              if (updated) return true;
+            }
+          }
+          return false;
+        };
+        
+        updateNodeContent(updatedNodes, activeNodeIdRef.current, leftContent);
+        
+        // Step 2: Create a new node with right content
+        const newNodeId = generateId();
+        const newNode: OutlinerNode = {
+          id: newNodeId,
+          content: rightContent,
+          parent_id: currentNode.parent_id,
+          children: [],
+          isEditing: true,
+        };
+        
+        // Step 3: Insert new node after current node
+        const insertNodeAfter = (nodes: OutlinerNode[], targetId: string): boolean => {
+          for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].id === targetId) {
+              nodes.splice(i + 1, 0, newNode);
+              return true;
+            }
+            
+            if (nodes[i].children.length > 0) {
+              const inserted = insertNodeAfter(nodes[i].children, targetId);
+              if (inserted) return true;
+            }
+          }
+          return false;
+        };
+        
+        insertNodeAfter(updatedNodes, activeNodeIdRef.current);
+        
+        // Step 4: Move children if needed (using the shared helper function)
+        if (currentNode.children.length > 0) {
+          // Use the extracted helper function to move children
+          moveChildrenBetweenNodes(updatedNodes, activeNodeIdRef.current, newNodeId);
         }
-
-        if (newNodeId) {
-          setTimeout(() => {
-            focusNodeTextarea(newNodeId);
-          }, 0);
-        }
+        
+        // Apply all changes in one update
+        setNodes(updatedNodes);
+        
+        // Focus the new node after the DOM update
+        setTimeout(() => {
+          focusNodeTextarea(newNodeId);
+        }, 0);
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
