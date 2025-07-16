@@ -5,10 +5,6 @@ const routes = [
     path: "index",
     component: "routes/index.tsx",
   },
-  {
-    path: "test",
-    component: "routes/test.tsx",
-  },
 ];
 
 export default routes.map((item) =>
