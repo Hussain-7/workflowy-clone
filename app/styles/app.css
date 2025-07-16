@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import './_variables.scss';
+@import './_keyframe-animations.scss';
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,

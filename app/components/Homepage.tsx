@@ -1,11 +1,16 @@
-import React from 'react'
+import { SimpleEditor } from "~/components/tiptap-templates/simple/simple-editor";
+import Header from "./Header";
+import Content from "./Content";
 
-type Props = {}
+type Props = {};
 
 const Homepage = (props: Props) => {
   return (
-    <div>Homepage</div>
-  )
-}
+    <div className="w-full h-screen flex flex-col items-center justify-start bg-white">
+      <Header />
+      <Content />
+    </div>
+  );
+};
 
-export default Homepage
+export default Homepage;
