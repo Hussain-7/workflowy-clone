@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Content from "~/components/Content";
 import Header from "~/components/Header";
 import type { Route } from "./+types";
@@ -19,6 +19,11 @@ type Props = {
 const OutlinerPageWrapper = ({ params }: Route.ComponentProps) => {
   const { id } = params;
   console.log("Document ID from route params:", id);
+  
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div className="w-full flex flex-col items-center justify-start min-h-[calc(100vh-50px)] bg-white">
       <Content documentId={id} />
