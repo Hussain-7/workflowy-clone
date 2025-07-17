@@ -14,7 +14,6 @@ const OutlinerItem: React.FC<{
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
-  showMain: boolean;
 }> = ({
   node,
   onAddChild,
@@ -24,16 +23,14 @@ const OutlinerItem: React.FC<{
   onKeyDown,
   level,
   isLastNode,
-  showMain,
 }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // State to track whether children are expanded or collapsed
-  const [expanded, setExpanded] = useState(showMain ? false : true);
+  const [expanded, setExpanded] = useState(false);
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
-    if (showMain) return;
     e.stopPropagation();
     setExpanded(!expanded);
   };
@@ -133,7 +130,6 @@ const OutlinerItem: React.FC<{
               onKeyDown={onKeyDown}
               level={level + 1}
               isLastNode={index === node.children.length - 1}
-              showMain={showMain}
             />
           ))}
         </div>

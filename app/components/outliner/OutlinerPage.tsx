@@ -55,7 +55,6 @@ const OutlinePage = ({ nodeId }: Props) => {
               onKeyDown={handleKeyDown}
               level={0}
               isLastNode={index === nodes.length - 1}
-              showMain={false}
             />
           ))
         )}
