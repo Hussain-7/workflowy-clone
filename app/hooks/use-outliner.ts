@@ -40,14 +40,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
   },[default_nodes])
   // Initial data structure with a root node
   const [nodes, setNodes] = useState<OutlinerNode[]>(
-    default_nodes || [
-      {
-        id: ROOT_ID,
-        content: "",
-        parent_id: null,
-        children: [],
-      },
-    ]
+    default_nodes 
   );
 
   console.log("Nodes", JSON.stringify(nodes));
@@ -559,6 +552,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       grandParentId: string | null,
       nodeToAdd: OutlinerNode
     ): boolean => {
+      console.log('grandParentId here:',nodes,grandParentId)
       if (grandParentId === null) {
         // Parent is at root level, which means we're adding the node as a root node
         const parentIndex = nodes.findIndex((n) => n.id === parentId);
@@ -575,11 +569,13 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
       // Find the grandparent at root level first
       const rootGrandparent = nodes.find((n) => n.id === grandParentId);
+      console.log('rootGrandparent',rootGrandparent)
       if (rootGrandparent) {
         // Found grandparent at root level
         const parentIndex = rootGrandparent.children.findIndex(
           (n) => n.id === parentId
         );
+        console.log('parentIndex',parentIndex);
 
         if (parentIndex !== -1) {
           // Set correct parent_id for the node to add
@@ -773,6 +769,9 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       activeNodeIdRef.current
     );
 
+    console.log('clonedNodes',clonedNodes,activeNodeIdRef.current);
+    
+
     // If we have a node and a parent, we can unindent
     if (clonedNode && clonedParent) {
       // Remove node from its current parent
@@ -781,6 +780,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         clonedParent.id,
         activeNodeIdRef.current
       );
+      console.log('nodeToMove',nodeToMove);
 
       if (nodeToMove) {
         // Add node after parent in its parent's children list
@@ -788,6 +788,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         const parentId = clonedParent.id;
         const grandParentId = clonedParent.parent_id; // Can be null for root-level parents
 
+        console.log('grandParentId',grandParentId,);
         const success = addNodeAfterParent(
           clonedNodes,
           parentId,

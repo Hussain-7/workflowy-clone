@@ -1,5 +1,5 @@
-import Homepage from "~/components/Homepage";
 import type { Route } from "./+types/index";
+import OutlinePage from "~/components/outliner/OutlinerPage";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,5 +9,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function HomePage() {
-  return <Homepage />;
+  return <OutlinePage />;
 }

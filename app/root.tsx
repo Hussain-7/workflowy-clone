@@ -35,7 +35,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="w-full min-h-screen bg-white! overflow-y-auto flex flex-col items-center justify-start">
         <Header />
-        {children}
+        <div className="w-full flex flex-col items-center justify-start min-h-[calc(100vh-50px)] bg-white">
+          {children}
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -3,9 +3,8 @@ import type { OutlinerNode } from "~/hooks/use-outliner";
 export const mainDocuments: OutlinerNode[] = [
   {
     id: "3232395",
-    content: "Braninlift",
+    content: "My Ephor Braninlift",
     parent_id: null,
-
     children: [
       {
         id: "node_sahfkashfksahfkshakfhsafhksahfk",
@@ -234,7 +233,7 @@ export const mainDocuments: OutlinerNode[] = [
   },
   {
     id: "323239sdakcmcmcasdfsddsfs",
-    content: "Braninlift 2",
+    content: "My Personal Braninlift",
     parent_id: null,
     children: [
       {
@@ -482,5 +481,11 @@ export const mainDocuments: OutlinerNode[] = [
         ],
       },
     ],
+  },
+  {
+    id: "sfdasfdsfsafsafasfsafsafv",
+    content: "Scratchpad 2",
+    parent_id: null,
+    children: [],
   },
 ];
