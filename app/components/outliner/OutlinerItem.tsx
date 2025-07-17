@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaCircle } from "react-icons/fa";
 import { IoTriangleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router";
-import type { OutlinerNode } from "~/hooks/use-outliner";
+import type { OutlinerNode } from "~/store/use-outliner-store";
 const LEFT_MARGIN = 35;
 // OutlinerItem component for recursive rendering
 const OutlinerItem: React.FC<{
@@ -11,13 +11,7 @@ const OutlinerItem: React.FC<{
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
-}> = ({
-  node,
-  onEdit,
-  onKeyDown,
-  level,
-  isLastNode,
-}) => {
+}> = ({ node, onEdit, onKeyDown, level, isLastNode }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // State to track whether children are expanded or collapsed
@@ -98,6 +92,12 @@ const OutlinerItem: React.FC<{
             autoResizeTextarea(e.target);
           }}
           onKeyDown={(e) => onKeyDown(e, node.id)}
+          onMouseDown={(e) =>
+            onKeyDown(
+              e as unknown as React.KeyboardEvent<HTMLTextAreaElement>,
+              node.id
+            )
+          }
           className="w-full text-black border-none focus:ring-0 outline-none bg-transparent resize-none overflow-hidden block"
           autoFocus={node.meta_data.isEditing}
           placeholder="Type here..."
