@@ -6,10 +6,13 @@ export interface OutlinerNode {
   content: string;
   parent_id: string | null;
   children: OutlinerNode[];
-  isEditing?: boolean;
+  meta_data: {
+    isEditing?: boolean;
+    isExpanded?: boolean;
+  };
 }
 
-export const getAllNodesFlattened = ((nodes: OutlinerNode[]) => {
+export const getAllNodesFlattened = (nodes: OutlinerNode[]) => {
   const flattenedNodes: OutlinerNode[] = [];
 
   const traverseInOrder = (nodes: OutlinerNode[]) => {
@@ -23,7 +26,7 @@ export const getAllNodesFlattened = ((nodes: OutlinerNode[]) => {
 
   traverseInOrder(nodes);
   return flattenedNodes;
-});
+};
 
 const ROOT_ID = "node_sahfkashfksahfkshakfhsafhksahfk";
 
@@ -35,15 +38,11 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
     () => `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     []
   );
-  useEffect(()=>{
-    setNodes(default_nodes)
-  },[default_nodes])
+  useEffect(() => {
+    setNodes(default_nodes);
+  }, [default_nodes]);
   // Initial data structure with a root node
-  const [nodes, setNodes] = useState<OutlinerNode[]>(
-    default_nodes 
-  );
-
-  console.log("Nodes", JSON.stringify(nodes));
+  const [nodes, setNodes] = useState<OutlinerNode[]>(default_nodes);
 
   // Helper function to find a node and its parent in the tree
   const findNode = useCallback(
@@ -197,7 +196,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         content: content,
         parent_id: null,
         children: [],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+          isExpanded: false,
+        },
       };
 
       // If afterId is null, add to the root level at the end
@@ -259,7 +261,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         content: content,
         parent_id: null,
         children: [],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+          isExpanded: false,
+        },
       };
 
       // Find the node to insert before
@@ -315,7 +320,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         content: "New child",
         parent_id: parentId,
         children: [],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+          isExpanded: false,
+        },
       };
 
       // Deep clone the nodes array and add the new child
@@ -418,7 +426,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       ): OutlinerNode[] => {
         return nodes.map((node) => {
           if (node.id === id) {
-            return { ...node, isEditing: !node.isEditing };
+            return { ...node, meta_data: { ...node.meta_data, isEditing: !node.meta_data.isEditing } };
           }
 
           if (node.children.length > 0) {
@@ -552,7 +560,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       grandParentId: string | null,
       nodeToAdd: OutlinerNode
     ): boolean => {
-      console.log('grandParentId here:',nodes,grandParentId)
       if (grandParentId === null) {
         // Parent is at root level, which means we're adding the node as a root node
         const parentIndex = nodes.findIndex((n) => n.id === parentId);
@@ -569,13 +576,11 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
       // Find the grandparent at root level first
       const rootGrandparent = nodes.find((n) => n.id === grandParentId);
-      console.log('rootGrandparent',rootGrandparent)
       if (rootGrandparent) {
         // Found grandparent at root level
         const parentIndex = rootGrandparent.children.findIndex(
           (n) => n.id === parentId
         );
-        console.log('parentIndex',parentIndex);
 
         if (parentIndex !== -1) {
           // Set correct parent_id for the node to add
@@ -769,8 +774,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       activeNodeIdRef.current
     );
 
-    console.log('clonedNodes',clonedNodes,activeNodeIdRef.current);
-    
 
     // If we have a node and a parent, we can unindent
     if (clonedNode && clonedParent) {
@@ -780,7 +783,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         clonedParent.id,
         activeNodeIdRef.current
       );
-      console.log('nodeToMove',nodeToMove);
 
       if (nodeToMove) {
         // Add node after parent in its parent's children list
@@ -788,7 +790,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         const parentId = clonedParent.id;
         const grandParentId = clonedParent.parent_id; // Can be null for root-level parents
 
-        console.log('grandParentId',grandParentId,);
         const success = addNodeAfterParent(
           clonedNodes,
           parentId,
@@ -897,7 +898,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
           content: rightContent,
           parent_id: currentNode.parent_id,
           children: [],
-          isEditing: true,
+          meta_data: {
+            isEditing: true,
+            isExpanded: false,
+          },
         };
 
         // Step 3: Insert new node after current node
@@ -1066,7 +1070,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
           content: "",
           parent_id: null,
           children: [],
-          isEditing: true,
+          meta_data: {
+            isEditing: true,
+            isExpanded: false,
+          },
         },
       ]);
     }

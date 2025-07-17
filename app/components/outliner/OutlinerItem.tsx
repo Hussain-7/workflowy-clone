@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaCircle } from "react-icons/fa";
-import {
-  IoChevronDown,
-  IoChevronForward,
-  IoTriangleSharp,
-} from "react-icons/io5";
+import { IoTriangleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import type { OutlinerNode } from "~/hooks/use-outliner";
 const LEFT_MARGIN = 35;
@@ -50,14 +46,14 @@ const OutlinerItem: React.FC<{
 
   // Focus on the input field when in editing mode and resize
   useEffect(() => {
-    if (node.isEditing && inputRef.current) {
+    if (node.meta_data.isEditing && inputRef.current) {
       inputRef.current.focus();
       // Place cursor at the end of text
       const length = inputRef.current.value.length;
       inputRef.current.setSelectionRange(length, length);
       autoResizeTextarea(inputRef.current);
     }
-  }, [node.isEditing]);
+  }, [node.meta_data.isEditing]);
 
   // Auto-resize on content change
   useEffect(() => {
@@ -112,7 +108,7 @@ const OutlinerItem: React.FC<{
           }}
           onKeyDown={(e) => onKeyDown(e, node.id)}
           className="w-full text-black border-none focus:ring-0 outline-none bg-transparent resize-none overflow-hidden block"
-          autoFocus={node.isEditing}
+          autoFocus={node.meta_data.isEditing}
           placeholder="Type here..."
           data-node-id={node.id}
           rows={1}

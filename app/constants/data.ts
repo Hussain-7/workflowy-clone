@@ -10,13 +10,14 @@ export const mainDocuments: OutlinerNode[] = [
         id: "node_sahfkashfksahfkshakfhsafhksahfk",
         content: "Owner",
         parent_id: "3232395",
+        meta_data: {},
         children: [
           {
             id: "node_1752671154027_593",
             content: "Hussain Rizvi",
             parent_id: "node_sahfkashfksahfkshakfhsafhksahfk",
             children: [],
-            isEditing: true,
+            meta_data: {},
           },
         ],
       },
@@ -31,7 +32,7 @@ export const mainDocuments: OutlinerNode[] = [
               "Deeply personalize the Ephor experience by tailoring AI personas to each user’s core beliefs, expertise, and thought processes",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {},
           },
           {
             id: "node_1752671165219_841",
@@ -39,7 +40,7 @@ export const mainDocuments: OutlinerNode[] = [
               "Evolve sophisticated, long-term AI personas that authentically represent users’ knowledge and viewpoints, enabling autonomous, credible idea expression across social media.",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {},
           },
           {
             id: "node_1752671170547_668",
@@ -47,7 +48,7 @@ export const mainDocuments: OutlinerNode[] = [
               "Drive an advanced engine for ingesting, analyzing, and interacting with social media content to optimize personas, continuously refining them for greater authenticity, relevance, and impact",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {},
           },
           {
             id: "node_1752671172195_189",
@@ -60,7 +61,7 @@ export const mainDocuments: OutlinerNode[] = [
                   "Building AI personas that mirror each user’s expertise and beliefs.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752671974399_773",
@@ -68,7 +69,7 @@ export const mainDocuments: OutlinerNode[] = [
                   "Autonomous generation and publishing of user-aligned content on social platforms.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752671985092_760",
@@ -76,10 +77,10 @@ export const mainDocuments: OutlinerNode[] = [
                   "Real-time ingestion and processing of social feeds to dynamically update personas.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
             ],
-            isEditing: true,
+            meta_data: {},
           },
           {
             id: "node_1752671993369_742",
@@ -92,7 +93,7 @@ export const mainDocuments: OutlinerNode[] = [
                   "General-purpose AI personas without strong user alignment.",
                 parent_id: "node_1752671993369_742",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752672004203_351",
@@ -100,13 +101,13 @@ export const mainDocuments: OutlinerNode[] = [
                   "Content processing that does not directly enhance persona authenticity or engagement",
                 parent_id: "node_1752671993369_742",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
             ],
-            isEditing: true,
+            meta_data: {},
           },
         ],
-        isEditing: true,
+        meta_data: {},
       },
       {
         id: "node_1752672021384_609",
@@ -125,7 +126,7 @@ export const mainDocuments: OutlinerNode[] = [
                   "Boundary-pushing: Challenges the prevailing acceptance of monolithic pipelines.",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752672038224_932",
@@ -133,7 +134,7 @@ export const mainDocuments: OutlinerNode[] = [
                   "Mechanism: Accuracy degradation due to inflexible single-pipeline design.",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752672043402_273",
@@ -141,13 +142,13 @@ export const mainDocuments: OutlinerNode[] = [
                   "Counterperspective: Single-pipeline architectures might suffice for simpler tasks, but complexity exposes their critical weaknesses",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
             ],
-            isEditing: true,
+            meta_data: {},
           },
         ],
-        isEditing: true,
+        meta_data: {},
       },
       {
         id: "node_1752672050289_587",
@@ -165,7 +166,7 @@ export const mainDocuments: OutlinerNode[] = [
                 content: "Supports: SPOV 1, 5",
                 parent_id: "node_1752672057896_198",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752672067311_69",
@@ -173,13 +174,13 @@ export const mainDocuments: OutlinerNode[] = [
                   "References: OpenAI, Anthropic, Mollick, X AI, TikTok AI\nBy 2026, leading platforms—including X (Twitter), LinkedIn, and TikTok—will phase out static, profile-based AI personas, replacing them with real-time adaptive agents that learn from trending topics and live user engagement. Platforms slow to adopt will lo",
                 parent_id: "node_1752672057896_198",
                 children: [],
-                isEditing: true,
+                meta_data: {},
               },
             ],
-            isEditing: true,
+            meta_data: {},
           },
         ],
-        isEditing: true,
+        meta_data: {},
       },
       {
         id: "node_1752672076583_885",
@@ -202,10 +203,10 @@ export const mainDocuments: OutlinerNode[] = [
                       "Static AI personas, updated infrequently, quickly become misaligned with users’ evolving beliefs and tones.",
                     parent_id: "node_1752672085431_688",
                     children: [],
-                    isEditing: true,
+                    meta_data: {},
                   },
                 ],
-                isEditing: true,
+                meta_data: {},
               },
               {
                 id: "node_1752672095123_967",
@@ -218,18 +219,19 @@ export const mainDocuments: OutlinerNode[] = [
                       "Research and field practice confirm that AI personas created once and rarely updated quickly lose relevance. Continuous ingestion of user and social feedback is critical for maintaining authenticity and alignment with the user’s real-world beliefs and tone.",
                     parent_id: "node_1752672095123_967",
                     children: [],
-                    isEditing: true,
+                    meta_data: {},
                   },
                 ],
-                isEditing: true,
+                meta_data: {},
               },
             ],
-            isEditing: true,
+            meta_data: {},
           },
         ],
-        isEditing: true,
+        meta_data: {},
       },
     ],
+    meta_data: {},
   },
   {
     id: "323239sdakcmcmcasdfsddsfs",
@@ -246,9 +248,10 @@ export const mainDocuments: OutlinerNode[] = [
             content: "Hussain Rizvi",
             parent_id: "node_sahfkashfksahfkshakfhsafhksahfk",
             children: [],
-            isEditing: true,
+            meta_data: {},
           },
         ],
+        meta_data: {},
       },
       {
         id: "node_1752671156653_55",
@@ -261,7 +264,9 @@ export const mainDocuments: OutlinerNode[] = [
               "Deeply personalize the Ephor experience by tailoring AI personas to each user’s core beliefs, expertise, and thought processes",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
           {
             id: "node_1752671165219_841",
@@ -269,7 +274,9 @@ export const mainDocuments: OutlinerNode[] = [
               "Evolve sophisticated, long-term AI personas that authentically represent users’ knowledge and viewpoints, enabling autonomous, credible idea expression across social media.",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
           {
             id: "node_1752671170547_668",
@@ -277,7 +284,9 @@ export const mainDocuments: OutlinerNode[] = [
               "Drive an advanced engine for ingesting, analyzing, and interacting with social media content to optimize personas, continuously refining them for greater authenticity, relevance, and impact",
             parent_id: "node_1752671156653_55",
             children: [],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
           {
             id: "node_1752671172195_189",
@@ -290,7 +299,9 @@ export const mainDocuments: OutlinerNode[] = [
                   "Building AI personas that mirror each user’s expertise and beliefs.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752671974399_773",
@@ -298,7 +309,9 @@ export const mainDocuments: OutlinerNode[] = [
                   "Autonomous generation and publishing of user-aligned content on social platforms.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752671985092_760",
@@ -306,10 +319,14 @@ export const mainDocuments: OutlinerNode[] = [
                   "Real-time ingestion and processing of social feeds to dynamically update personas.",
                 parent_id: "node_1752671172195_189",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
             ],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
           {
             id: "node_1752671993369_742",
@@ -322,7 +339,9 @@ export const mainDocuments: OutlinerNode[] = [
                   "General-purpose AI personas without strong user alignment.",
                 parent_id: "node_1752671993369_742",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752672004203_351",
@@ -330,13 +349,19 @@ export const mainDocuments: OutlinerNode[] = [
                   "Content processing that does not directly enhance persona authenticity or engagement",
                 parent_id: "node_1752671993369_742",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
             ],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
         ],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+        },
       },
       {
         id: "node_1752672021384_609",
@@ -355,7 +380,9 @@ export const mainDocuments: OutlinerNode[] = [
                   "Boundary-pushing: Challenges the prevailing acceptance of monolithic pipelines.",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752672038224_932",
@@ -363,7 +390,9 @@ export const mainDocuments: OutlinerNode[] = [
                   "Mechanism: Accuracy degradation due to inflexible single-pipeline design.",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752672043402_273",
@@ -371,13 +400,19 @@ export const mainDocuments: OutlinerNode[] = [
                   "Counterperspective: Single-pipeline architectures might suffice for simpler tasks, but complexity exposes their critical weaknesses",
                 parent_id: "node_1752672026042_993",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
             ],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
         ],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+        },
       },
       {
         id: "node_1752672050289_587",
@@ -395,7 +430,9 @@ export const mainDocuments: OutlinerNode[] = [
                 content: "Supports: SPOV 1, 5",
                 parent_id: "node_1752672057896_198",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752672067311_69",
@@ -403,13 +440,19 @@ export const mainDocuments: OutlinerNode[] = [
                   "References: OpenAI, Anthropic, Mollick, X AI, TikTok AI\nBy 2026, leading platforms—including X (Twitter), LinkedIn, and TikTok—will phase out static, profile-based AI personas, replacing them with real-time adaptive agents that learn from trending topics and live user engagement. Platforms slow to adopt will lo",
                 parent_id: "node_1752672057896_198",
                 children: [],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
             ],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
         ],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+        },
       },
       {
         id: "node_1752672076583_885",
@@ -432,10 +475,14 @@ export const mainDocuments: OutlinerNode[] = [
                       "Static AI personas, updated infrequently, quickly become misaligned with users’ evolving beliefs and tones.",
                     parent_id: "node_1752672085431_688",
                     children: [],
-                    isEditing: true,
+                    meta_data: {
+                      isEditing: true,
+                    },
                   },
                 ],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
               {
                 id: "node_1752672095123_967",
@@ -448,18 +495,27 @@ export const mainDocuments: OutlinerNode[] = [
                       "Research and field practice confirm that AI personas created once and rarely updated quickly lose relevance. Continuous ingestion of user and social feedback is critical for maintaining authenticity and alignment with the user’s real-world beliefs and tone.",
                     parent_id: "node_1752672095123_967",
                     children: [],
-                    isEditing: true,
+                    meta_data: {
+                      isEditing: true,
+                    },
                   },
                 ],
-                isEditing: true,
+                meta_data: {
+                  isEditing: true,
+                },
               },
             ],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
         ],
-        isEditing: true,
+        meta_data: {
+          isEditing: true,
+        },
       },
     ],
+    meta_data: {},
   },
   {
     id: "dfasfasfjljh43j3ljl34j3",
@@ -476,16 +532,21 @@ export const mainDocuments: OutlinerNode[] = [
             content: "Hussain Rizvi",
             parent_id: "node_sahfkashfksahfkshakfhsafhksahfk",
             children: [],
-            isEditing: true,
+            meta_data: {
+              isEditing: true,
+            },
           },
         ],
+        meta_data: {},
       },
     ],
+    meta_data: {},
   },
   {
     id: "sfdasfdsfsafsafasfsafsafv",
     content: "Scratchpad 2",
     parent_id: null,
     children: [],
+    meta_data: {},
   },
 ];
