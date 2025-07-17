@@ -1,10 +1,8 @@
-import useOutliner, {
-  getAllNodesFlattened,
-  type OutlinerNode,
-} from "@/hooks/use-outliner";
-import { mainDocuments } from "~/constants/data";
+import useOutliner, { type OutlinerNode } from "@/hooks/use-outliner";
+import { mainDocuments } from "@/constants/data";
 import OutlinerItem from "./OutlinerItem";
 import { useEffect } from "react";
+import { getAllNodesFlattened } from "@/lib/outliner-helper";
 
 type Props = {
   nodeId?: string;

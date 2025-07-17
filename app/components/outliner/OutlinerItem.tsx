@@ -27,7 +27,7 @@ const OutlinerItem: React.FC<{
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // State to track whether children are expanded or collapsed
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {

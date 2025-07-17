@@ -7,8 +7,9 @@ import {
   FiShare2,
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router";
-import { mainDocuments } from "~/constants/data";
-import { getAllNodesFlattened, type OutlinerNode } from "~/hooks/use-outliner";
+import { mainDocuments } from "@/constants/data";
+import { getAllNodesFlattened } from "@/lib/outliner-helper";
+import type { OutlinerNode } from "@/hooks/use-outliner";
 import SearchBar from "./SearchBar";
 
 type Props = {};

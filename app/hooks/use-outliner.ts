@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { findNode, findPreviousNode, generateNodeId, getAllNodesFlattened } from "~/lib/outliner-helper";
+
 // Define the structure of an outliner node
 export interface OutlinerNode {
   id: string;
@@ -12,112 +14,16 @@ export interface OutlinerNode {
   };
 }
 
-export const getAllNodesFlattened = (nodes: OutlinerNode[]) => {
-  const flattenedNodes: OutlinerNode[] = [];
-
-  const traverseInOrder = (nodes: OutlinerNode[]) => {
-    for (let i = 0; i < nodes.length; i++) {
-      flattenedNodes.push(nodes[i]);
-      if (nodes[i].children.length > 0) {
-        traverseInOrder(nodes[i].children);
-      }
-    }
-  };
-
-  traverseInOrder(nodes);
-  return flattenedNodes;
-};
-
-const ROOT_ID = "node_sahfkashfksahfkshakfhsafhksahfk";
 
 const useOutliner = (default_nodes: OutlinerNode[]) => {
   // Reference for currently focused node ID
   const activeNodeIdRef = useRef<string | null>(null);
 
-  const generateId = useCallback(
-    () => `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-    []
-  );
   useEffect(() => {
     setNodes(default_nodes);
   }, [default_nodes]);
   // Initial data structure with a root node
   const [nodes, setNodes] = useState<OutlinerNode[]>(default_nodes);
-
-  // Helper function to find a node and its parent in the tree
-  const findNode = useCallback(
-    (
-      nodes: OutlinerNode[],
-      id: string
-    ): [OutlinerNode | null, OutlinerNode | null, number] => {
-      for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].id === id) {
-          return [nodes[i], null, i]; // Found node, no parent (root level), index
-        }
-
-        // Look in children
-        if (nodes[i].children.length > 0) {
-          const [found, parent, index] = findNode(nodes[i].children, id);
-          if (found) {
-            return [found, parent || nodes[i], index]; // Found node, its parent, index in parent's children
-          }
-        }
-      }
-
-      return [null, null, -1]; // Not found
-    },
-    []
-  );
-
-  // Find previous node in the tree (for backspace handling)
-  const findPreviousNode = useCallback(
-    (nodeId: string): OutlinerNode | null => {
-      let prevNode: OutlinerNode | null = null;
-
-      const traverse = (nodes: OutlinerNode[], targetId: string) => {
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].id === targetId) {
-            return true;
-          }
-
-          // Traverse children
-          if (nodes[i].children.length > 0) {
-            const found = traverse(nodes[i].children, targetId);
-            if (found) {
-              return true;
-            }
-          }
-
-          // This node comes before our target
-          prevNode = nodes[i];
-        }
-
-        return false;
-      };
-
-      traverse(nodes, nodeId);
-      return prevNode;
-    },
-    [nodes]
-  );
-
-  // Get all nodes in flattened order for up/down navigation
-  const getAllNodesFlattened = useCallback(() => {
-    const flattenedNodes: OutlinerNode[] = [];
-
-    const traverseInOrder = (nodes: OutlinerNode[]) => {
-      for (let i = 0; i < nodes.length; i++) {
-        flattenedNodes.push(nodes[i]);
-        if (nodes[i].children.length > 0) {
-          traverseInOrder(nodes[i].children);
-        }
-      }
-    };
-
-    traverseInOrder(nodes);
-    return flattenedNodes;
-  }, [nodes]);
-
   // Find the deepest last child of a node
   const findDeepestLastChild = useCallback(
     (node: OutlinerNode): OutlinerNode => {
@@ -136,8 +42,8 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
   // Find the previous node in hierarchy for up arrow navigation
   const findPreviousNodeInHierarchy = useCallback(
-    (nodeId: string): OutlinerNode | null => {
-      const flattenedNodes = getAllNodesFlattened();
+    (nodeId: string, nodes: OutlinerNode[]): OutlinerNode | null => {
+      const flattenedNodes = getAllNodesFlattened(nodes);
       const currentIndex = flattenedNodes.findIndex((n) => n.id === nodeId);
 
       if (currentIndex === -1 || currentIndex <= 0) {
@@ -151,8 +57,8 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
   // Find the next node in hierarchy for down arrow navigation
   const findNextNodeInHierarchy = useCallback(
-    (nodeId: string): OutlinerNode | null => {
-      const flattenedNodes = getAllNodesFlattened();
+    (nodeId: string, nodes: OutlinerNode[]): OutlinerNode | null => {
+      const flattenedNodes = getAllNodesFlattened(nodes);
       const currentIndex = flattenedNodes.findIndex((n) => n.id === nodeId);
 
       if (currentIndex === -1 || currentIndex >= flattenedNodes.length - 1) {
@@ -190,7 +96,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
   // Add a new node at the root level or after a specific node
   const addNodeAfter = useCallback(
     (afterId: string | null = null, content: string = "") => {
-      const newNodeId = generateId();
+      const newNodeId = generateNodeId();
       const newNode: OutlinerNode = {
         id: newNodeId,
         content: content,
@@ -249,13 +155,13 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
       return null;
     },
-    [nodes, generateId]
+    [nodes, generateNodeId]
   );
 
   // Add a new node before a specific node
   const addNodeBefore = useCallback(
     (beforeId: string, content: string = "") => {
-      const newNodeId = generateId();
+      const newNodeId = generateNodeId();
       const newNode: OutlinerNode = {
         id: newNodeId,
         content: content,
@@ -308,13 +214,13 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
       return null;
     },
-    [nodes, generateId]
+    [nodes, generateNodeId]
   );
 
   // Add a child node to a parent node
   const handleAddChild = useCallback(
     (parentId: string) => {
-      const newNodeId = generateId();
+      const newNodeId = generateNodeId();
       const newNode: OutlinerNode = {
         id: newNodeId,
         content: "New child",
@@ -426,7 +332,13 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       ): OutlinerNode[] => {
         return nodes.map((node) => {
           if (node.id === id) {
-            return { ...node, meta_data: { ...node.meta_data, isEditing: !node.meta_data.isEditing } };
+            return {
+              ...node,
+              meta_data: {
+                ...node.meta_data,
+                isEditing: !node.meta_data.isEditing,
+              },
+            };
           }
 
           if (node.children.length > 0) {
@@ -634,8 +546,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
     (e: React.KeyboardEvent<HTMLTextAreaElement>, nodeId: string) => {
       // Update active node ID on any keyboard event
       activeNodeIdRef.current = nodeId;
-
-      // The actual key handling is done by useHotkeys
     },
     []
   );
@@ -774,7 +684,6 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       activeNodeIdRef.current
     );
 
-
     // If we have a node and a parent, we can unindent
     if (clonedNode && clonedParent) {
       // Remove node from its current parent
@@ -892,7 +801,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         updateNodeContent(updatedNodes, activeNodeIdRef.current, leftContent);
 
         // Step 2: Create a new node with right content
-        const newNodeId = generateId();
+        const newNodeId = generateNodeId();
         const newNode: OutlinerNode = {
           id: newNodeId,
           content: rightContent,
@@ -997,7 +906,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         handleDelete(activeNodeIdRef.current);
 
         // Try to focus on previous node
-        const previousNode = findPreviousNode(activeNodeIdRef.current);
+        const previousNode = findPreviousNode(activeNodeIdRef.current, nodes);
         if (previousNode) {
           // Set timeout to allow DOM to update
           setTimeout(() => {
@@ -1027,7 +936,8 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       // Only navigate if cursor is at the beginning of the textarea
       if (targetEl.selectionStart === 0) {
         const previousNode = findPreviousNodeInHierarchy(
-          activeNodeIdRef.current
+          activeNodeIdRef.current,
+          nodes
         );
 
         if (previousNode) {
@@ -1037,7 +947,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findPreviousNodeInHierarchy, focusNodeTextarea]
+    [findPreviousNodeInHierarchy, focusNodeTextarea, nodes]
   );
 
   // Handle Down Arrow - navigate to next node
@@ -1049,7 +959,10 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
 
       // Only navigate if cursor is at the end of the textarea
       if (targetEl.selectionStart === targetEl.value.length) {
-        const nextNode = findNextNodeInHierarchy(activeNodeIdRef.current);
+        const nextNode = findNextNodeInHierarchy(
+          activeNodeIdRef.current,
+          nodes
+        );
 
         if (nextNode) {
           e.preventDefault();
@@ -1058,7 +971,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findNextNodeInHierarchy, focusNodeTextarea]
+    [findNextNodeInHierarchy, focusNodeTextarea, nodes]
   );
 
   // Start with a single node if there are none
@@ -1066,7 +979,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
     if (nodes.length === 0) {
       setNodes([
         {
-          id: generateId(),
+          id: generateNodeId(),
           content: "",
           parent_id: null,
           children: [],
@@ -1077,7 +990,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
         },
       ]);
     }
-  }, [nodes, generateId]);
+  }, [nodes, generateNodeId]);
 
   return {
     nodes,
