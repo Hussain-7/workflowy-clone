@@ -20,10 +20,7 @@ const OutlinePage = ({ nodeId }: Props) => {
   const dataNodes = nodeId ? nodeSelected?.children : mainDocuments;
   const {
     nodes,
-    handleAddChild,
-    handleDelete,
     handleEdit,
-    handleToggleEdit,
     handleKeyDown,
   } = useOutliner(dataNodes || []);
 
@@ -46,10 +43,7 @@ const OutlinePage = ({ nodeId }: Props) => {
             <OutlinerItem
               key={node.id}
               node={node}
-              onAddChild={handleAddChild}
-              onDelete={handleDelete}
               onEdit={handleEdit}
-              onToggleEdit={handleToggleEdit}
               onKeyDown={handleKeyDown}
               level={0}
               isLastNode={index === nodes.length - 1}

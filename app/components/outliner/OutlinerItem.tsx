@@ -7,19 +7,13 @@ const LEFT_MARGIN = 35;
 // OutlinerItem component for recursive rendering
 const OutlinerItem: React.FC<{
   node: OutlinerNode;
-  onAddChild: (parentId: string) => void;
-  onDelete: (id: string) => void;
   onEdit: (id: string, content: string) => void;
-  onToggleEdit: (id: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
 }> = ({
   node,
-  onAddChild,
-  onDelete,
   onEdit,
-  onToggleEdit,
   onKeyDown,
   level,
   isLastNode,
@@ -123,10 +117,7 @@ const OutlinerItem: React.FC<{
             <OutlinerItem
               key={child.id}
               node={child}
-              onAddChild={onAddChild}
-              onDelete={onDelete}
               onEdit={onEdit}
-              onToggleEdit={onToggleEdit}
               onKeyDown={onKeyDown}
               level={level + 1}
               isLastNode={index === node.children.length - 1}
