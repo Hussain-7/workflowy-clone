@@ -3,7 +3,10 @@ import { FaCircle } from "react-icons/fa";
 import { IoTriangleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import type { OutlinerNode } from "~/store/use-outliner-store";
+import useOutlinerStore from "~/store/use-outliner-store";
+
 const LEFT_MARGIN = 35;
+
 // OutlinerItem component for recursive rendering
 const OutlinerItem: React.FC<{
   node: OutlinerNode;
@@ -14,11 +17,14 @@ const OutlinerItem: React.FC<{
 }> = ({ node, onNodeUpdate, onKeyDown, level, isLastNode }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { parseAndInsertStructuredText } = useOutlinerStore();
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onNodeUpdate(node.id, { meta_data: { isExpanded: !node.meta_data.isExpanded } });
+    onNodeUpdate(node.id, {
+      meta_data: { isExpanded: !node.meta_data.isExpanded },
+    });
   };
 
   // Auto-resize textarea based on content
@@ -44,6 +50,57 @@ const OutlinerItem: React.FC<{
       autoResizeTextarea(inputRef.current);
     }
   }, [node.content]);
+
+  // Handle paste events for structured text
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData("text");
+    console.log("pastedText", pastedText);
+
+    // Check if the pasted text contains structured content (multiple lines with indentation or bullets)
+    const lines = pastedText.split("\n");
+    console.log("lines", lines);
+    console.log("lines.length", lines.length);
+
+    const hasStructuredContent =
+      lines.length > 1 &&
+      lines.some((line) => {
+        const hasBullet = line.match(/^\s*[-*+]\s/);
+        const hasNumber = line.match(/^\s*\d+\.\s/);
+        const hasIndent = line.match(/^\s{2,}/);
+        console.log(
+          `Line: "${line}" | Bullet: ${!!hasBullet} | Number: ${!!hasNumber} | Indent: ${!!hasIndent}`
+        );
+        return hasBullet || hasNumber || hasIndent;
+      });
+
+    console.log("hasStructuredContent", hasStructuredContent);
+
+    if (hasStructuredContent) {
+      e.preventDefault();
+      console.log(
+        "Preventing default and calling parseAndInsertStructuredText"
+      );
+
+      // Parse the first line to update current node
+      const firstLine = lines[0];
+      const firstLineContent = firstLine
+        .trim()
+        .replace(/^[-*+]\s*/, "")
+        .replace(/^\d+\.\s*/, "");
+
+      // Update current node with first line content
+      onNodeUpdate(node.id, { content: firstLineContent });
+
+      // Parse and insert the remaining structured text as children
+      const remainingText = lines.slice(1).join("\n");
+      if (remainingText.trim()) {
+        // Insert as children by passing the current node as parent
+        parseAndInsertStructuredText(remainingText, node.id, false, true);
+      }
+    } else {
+      console.log("Not structured content, allowing normal paste");
+    }
+  };
 
   return (
     <div
@@ -90,6 +147,7 @@ const OutlinerItem: React.FC<{
             autoResizeTextarea(e.target);
           }}
           onKeyDown={(e) => onKeyDown(e, node.id)}
+          onPaste={handlePaste}
           onMouseDown={(e) =>
             onKeyDown(
               e as unknown as React.KeyboardEvent<HTMLTextAreaElement>,

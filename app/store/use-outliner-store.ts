@@ -58,6 +58,12 @@ interface OutlinerStore {
   // Helper methods
   focusNodeTextarea: (nodeId: string, cursorPosition?: "start" | "end") => void;
   generateNodeId: () => string;
+  parseAndInsertStructuredText: (
+    text: string,
+    targetNodeId: string | null,
+    insertAfter?: boolean,
+    asChildren?: boolean
+  ) => void;
 
   // Future API methods
   fetchNodes: () => Promise<void>;
@@ -532,7 +538,6 @@ const useOutlinerStore = create<OutlinerStore>()(
         const { nodes, findNode, focusNodeTextarea } = get();
         const clonedNodes = JSON.parse(JSON.stringify(nodes)) as OutlinerNode[];
         const [clonedNode, clonedParent] = findNode(nodeId);
-
         if (!clonedNode || !clonedParent) return false;
 
         // Helper functions for unindenting
@@ -862,10 +867,7 @@ const useOutlinerStore = create<OutlinerStore>()(
       },
 
       // Helper methods
-      focusNodeTextarea: (
-        nodeId: string,
-        cursorPosition: "start" | "end" = "end"
-      ) => {
+      focusNodeTextarea: (nodeId: string, cursorPosition?: "start" | "end") => {
         setTimeout(() => {
           const textarea = document.querySelector(
             `[data-node-id="${nodeId}"]`
@@ -886,7 +888,187 @@ const useOutlinerStore = create<OutlinerStore>()(
 
       generateNodeId: () => `node_${nanoid()}`,
 
-      // Future API methods (placeholders)
+      parseAndInsertStructuredText: (
+        text: string,
+        targetNodeId: string | null,
+        insertAfter: boolean = true,
+        asChildren: boolean = false
+      ) => {
+        console.log("parseAndInsertStructuredText called with:", {
+          text,
+          targetNodeId,
+          insertAfter,
+          asChildren,
+        });
+
+        const lines = text.split("\n").filter((line) => line.trim() !== "");
+        const { nodes, generateNodeId } = get();
+
+        console.log("Filtered lines:", lines);
+        console.log("Lines length:", lines.length);
+
+        if (lines.length === 0) {
+          console.log("No lines to process, returning early");
+          return;
+        }
+
+        // Parse lines and detect indentation levels
+        const parsedLines = lines.map((line) => {
+          const indentMatch = line.match(/^(\s*)/);
+          const indentLevel = indentMatch ? indentMatch[1].length : 0;
+          const content = line
+            .trim()
+            .replace(/^[-*+]\s*/, "")
+            .replace(/^\d+\.\s*/, "");
+
+          console.log(
+            `Parsing line: "${line}" | Indent: ${indentLevel} | Content: "${content}"`
+          );
+
+          return {
+            content,
+            indentLevel,
+            id: generateNodeId(),
+          };
+        });
+
+        console.log("Parsed lines:", parsedLines);
+
+        // Build hierarchical structure
+        const nodeStack: { node: OutlinerNode; level: number }[] = [];
+        const newNodes: OutlinerNode[] = [];
+
+        for (const parsedLine of parsedLines) {
+          const newNode: OutlinerNode = {
+            id: parsedLine.id,
+            content: parsedLine.content,
+            parent_id: null,
+            children: [],
+            meta_data: {
+              isEditing: false,
+              isExpanded: true,
+            },
+          };
+
+          console.log(
+            `Processing node: "${parsedLine.content}" at level ${parsedLine.indentLevel}`
+          );
+
+          // Find the correct parent based on indentation
+          while (
+            nodeStack.length > 0 &&
+            nodeStack[nodeStack.length - 1].level >= parsedLine.indentLevel
+          ) {
+            nodeStack.pop();
+          }
+
+          if (nodeStack.length === 0) {
+            // Root level node
+            console.log(`Adding as root node: "${parsedLine.content}"`);
+            newNodes.push(newNode);
+          } else {
+            // Child node
+            const parent = nodeStack[nodeStack.length - 1].node;
+            newNode.parent_id = parent.id;
+            parent.children.push(newNode);
+            console.log(
+              `Adding as child of "${parent.content}": "${parsedLine.content}"`
+            );
+          }
+
+          nodeStack.push({ node: newNode, level: parsedLine.indentLevel });
+        }
+
+        console.log("Final new nodes structure:", newNodes);
+
+        // Insert the new nodes into the existing tree
+        const updatedNodes = JSON.parse(
+          JSON.stringify(nodes)
+        ) as OutlinerNode[];
+
+        const insertNodes = (
+          nodes: OutlinerNode[],
+          newNodes: OutlinerNode[],
+          targetId: string | null,
+          insertAfter: boolean,
+          asChildren: boolean
+        ): boolean => {
+          console.log(
+            `Inserting ${newNodes.length} nodes. Target: ${targetId}, After: ${insertAfter}, As Children: ${asChildren}`
+          );
+
+          if (targetId === null) {
+            // Insert at root level
+            console.log("Inserting at root level");
+            if (insertAfter) {
+              nodes.push(...newNodes);
+            } else {
+              nodes.unshift(...newNodes);
+            }
+            return true;
+          }
+
+          // Find target node and insert
+          for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].id === targetId) {
+              console.log(`Found target node at index ${i}, inserting nodes`);
+              if (asChildren) {
+                // Insert as children of the target node
+                nodes[i].children = [...nodes[i].children, ...newNodes];
+                for (let child of newNodes) {
+                  child.parent_id = targetId;
+                }
+              } else {
+                // Insert as siblings
+                if (insertAfter) {
+                  nodes.splice(i + 1, 0, ...newNodes);
+                } else {
+                  nodes.splice(i, 0, ...newNodes);
+                }
+              }
+              return true;
+            }
+
+            if (nodes[i].children.length > 0) {
+              const inserted = insertNodes(
+                nodes[i].children,
+                newNodes,
+                targetId,
+                insertAfter,
+                asChildren
+              );
+              if (inserted) return true;
+            }
+          }
+          console.log("Target node not found");
+          return false;
+        };
+
+        const inserted = insertNodes(
+          updatedNodes,
+          newNodes,
+          targetNodeId,
+          insertAfter,
+          asChildren
+        );
+        console.log("Insertion result:", inserted);
+
+        if (inserted) {
+          console.log("Setting updated nodes:", updatedNodes);
+          set({ nodes: updatedNodes });
+
+          // Focus on the first new node
+          if (newNodes.length > 0) {
+            setTimeout(() => {
+              get().focusNodeTextarea(newNodes[0].id, "end");
+            }, 0);
+          }
+        } else {
+          console.log("Failed to insert nodes");
+        }
+      },
+
+      // Future API methods
       fetchNodes: async () => {
         // TODO: Implement API call to fetch nodes
         console.log("fetchNodes: Not implemented yet");
