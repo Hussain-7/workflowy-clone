@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import useOutlinerStore from "~/store/use-outliner-store";
 
@@ -100,10 +100,10 @@ const useOutliner = (nodeId?: string) => {
         targetEl.selectionStart === 0
       ) {
         e.preventDefault();
+        const previousNode = findPreviousNodeInHierarchy(activeNodeIdRef.current);
         handleDelete(activeNodeIdRef.current);
-
         // Try to focus on previous node
-        const previousNode = findPreviousNode(activeNodeIdRef.current);
+        console.log("previousNode", previousNode);
         if (previousNode) {
           // Set timeout to allow DOM to update
           setTimeout(() => {
@@ -120,7 +120,12 @@ const useOutliner = (nodeId?: string) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findNode, findPreviousNode, handleDelete]
+    [
+      findNode,
+      findPreviousNodeInHierarchy,
+      handleDelete,
+      activeNodeIdRef.current,
+    ]
   );
 
   // Handle Up Arrow - navigate to previous node
@@ -167,32 +172,42 @@ const useOutliner = (nodeId?: string) => {
     [findNextNodeInHierarchy, focusNodeTextarea]
   );
 
-  let nodeSelected: OutlinerNode | null = null;
-  if (nodeId) {
-    nodeSelected = getNodeById(nodeId);
-  }
+  // Memoize nodeSelected to prevent unnecessary re-calculations
+  const nodeSelected = useMemo(() => {
+    return nodeId ? getNodeById(nodeId) : null;
+  }, [nodeId, getNodeById]);
 
+  // Scroll to top when component mounts (only once)
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Track if we've already auto-added nodes to prevent duplicates
   const didAutoAddRef = useRef(false);
 
+  // Auto-add child to selected node if it has no children
   useEffect(() => {
-    if (!nodeSelected || didAutoAddRef.current || isLoading) return;
+    if (isLoading || !nodeSelected || didAutoAddRef.current) return;
+
     if (nodeSelected.children.length === 0) {
       didAutoAddRef.current = true;
       handleAddChild(nodeSelected.id);
     }
   }, [nodeSelected, handleAddChild, isLoading]);
 
+  // Auto-add root node if no nodes exist and we're on root page
   useEffect(() => {
-    // Only run when no nodes on current page and it is root page.
-    if (nodes.length > 0 || nodeId || didAutoAddRef.current || isLoading)
+    if (isLoading || nodeId || didAutoAddRef.current || nodes.length > 0)
       return;
+
     didAutoAddRef.current = true;
     handleAddChild(null);
-  }, [handleAddChild, nodeId, nodes, isLoading]);
+  }, [isLoading, nodeId, nodes.length, handleAddChild]);
+
+  // Reset auto-add flag when nodeId changes
+  useEffect(() => {
+    didAutoAddRef.current = false;
+  }, [nodeId]);
 
   return {
     nodes: nodeSelected?.children || nodes,

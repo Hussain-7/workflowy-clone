@@ -163,29 +163,16 @@ const useOutlinerStore = create<OutlinerStore>()(
       },
 
       findPreviousNode: (nodeId: string) => {
-        const { nodes } = get();
-        let prevNode: OutlinerNode | null = null;
+        const flattenedNodes = get().getAllNodesFlattened();
+        const currentIndex = flattenedNodes.findIndex(
+          (node) => node.id === nodeId
+        );
 
-        const traverse = (nodes: OutlinerNode[], targetId: string): boolean => {
-          for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].id === targetId) {
-              return true;
-            }
+        if (currentIndex > 0) {
+          return flattenedNodes[currentIndex - 1];
+        }
 
-            if (nodes[i].children.length > 0) {
-              const found = traverse(nodes[i].children, targetId);
-              if (found) {
-                return true;
-              }
-            }
-
-            prevNode = nodes[i];
-          }
-          return false;
-        };
-
-        traverse(nodes, nodeId);
-        return prevNode;
+        return null;
       },
 
       findPreviousNodeInHierarchy: (nodeId: string) => {
