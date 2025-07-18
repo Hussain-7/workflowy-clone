@@ -8,9 +8,9 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router";
 import { mainDocuments } from "@/constants/data";
-import { getAllNodesFlattened } from "@/lib/outliner-helper";
 import type { OutlinerNode } from "@/hooks/use-outliner";
 import SearchBar from "./SearchBar";
+import useOutlinerStore from "~/store/use-outliner-store";
 
 type Props = {};
 
@@ -18,10 +18,8 @@ const Header = (props: Props) => {
   const navigate = useNavigate();
   // Add dynamic logic later
   const { id } = useParams();
-  const flattenedData = getAllNodesFlattened(mainDocuments);
-  const nodeSelected = flattenedData.find(
-    (doc) => doc.id === id
-  ) as OutlinerNode;
+  const { findNode } = useOutlinerStore();
+  const [nodeSelected, parent, index] = findNode(id || null);
   return (
     <div className="w-full border-b border-black/10 h-[50px] px-2 flex items-center justify-between">
       {/* Left side elements */}

@@ -31,8 +31,9 @@ interface OutlinerStore {
   // Utility methods
   getAllNodesFlattened: () => OutlinerNode[];
   getNodeById: (id: string) => OutlinerNode | null;
-  findNode: (id: string) => [OutlinerNode | null, OutlinerNode | null, number];
-  findPreviousNode: (nodeId: string) => OutlinerNode | null;
+  findNode: (
+    id: string | null
+  ) => [OutlinerNode | null, OutlinerNode | null, number];
   findPreviousNodeInHierarchy: (nodeId: string) => OutlinerNode | null;
   findNextNodeInHierarchy: (nodeId: string) => OutlinerNode | null;
   findDeepestLastChild: (node: OutlinerNode) => OutlinerNode;
@@ -47,24 +48,12 @@ interface OutlinerStore {
   unIndentNode: (nodeId: string | null) => boolean;
 
   // Keyboard handling methods
-  handleEnterKey: (
-    nodeId: string,
-    cursorPosition: number,
-    nodeContent: string
-  ) => void;
-  handleBackspaceKey: (
-    nodeId: string,
-    cursorPosition: number,
-    nodeContent: string
-  ) => void;
-  handleTabKey: (nodeId: string) => void;
-  handleShiftTabKey: (nodeId: string) => void;
-  handleArrowUp: (nodeId: string, cursorPosition: number) => void;
-  handleArrowDown: (
-    nodeId: string,
-    cursorPosition: number,
-    textLength: number
-  ) => void;
+  handleEnterKey: (nodeId: string, cursorPosition: number) => void;
+  handleBackspaceKey: (nodeId: string, cursorPosition: number) => void;
+  handleTabKey: (nodeId: string | null) => void;
+  handleShiftTabKey: (nodeId: string | null) => void;
+  handleArrowUp: (nodeId: string) => void;
+  handleArrowDown: (nodeId: string) => void;
 
   // Helper methods
   focusNodeTextarea: (nodeId: string, cursorPosition?: "start" | "end") => void;
@@ -134,7 +123,8 @@ const useOutlinerStore = create<OutlinerStore>()(
         return flattenedData.find((doc) => doc.id === id) || null;
       },
 
-      findNode: (id: string) => {
+      findNode: (id: string | null) => {
+        if (!id) return [null, null, -1];
         const { nodes } = get();
 
         const search = (
@@ -160,19 +150,6 @@ const useOutlinerStore = create<OutlinerStore>()(
         };
 
         return search(nodes, id);
-      },
-
-      findPreviousNode: (nodeId: string) => {
-        const flattenedNodes = get().getAllNodesFlattened();
-        const currentIndex = flattenedNodes.findIndex(
-          (node) => node.id === nodeId
-        );
-
-        if (currentIndex > 0) {
-          return flattenedNodes[currentIndex - 1];
-        }
-
-        return null;
       },
 
       findPreviousNodeInHierarchy: (nodeId: string) => {
@@ -655,11 +632,7 @@ const useOutlinerStore = create<OutlinerStore>()(
       },
 
       // Keyboard handling methods
-      handleEnterKey: (
-        nodeId: string,
-        cursorPosition: number,
-        nodeContent: string
-      ) => {
+      handleEnterKey: (nodeId: string, cursorPosition: number) => {
         const {
           nodes,
           findNode,
@@ -670,6 +643,7 @@ const useOutlinerStore = create<OutlinerStore>()(
           focusNodeTextarea,
         } = get();
         const [currentNode] = findNode(nodeId);
+        const nodeContent = currentNode?.content || "";
         if (!currentNode) return;
 
         // Special case: If node is empty, and not at root level, unindent it
@@ -827,29 +801,22 @@ const useOutlinerStore = create<OutlinerStore>()(
           }
 
           set({ nodes: updatedNodes });
-          setTimeout(() => focusNodeTextarea(newNodeId), 0);
+          setTimeout(() => focusNodeTextarea(newNodeId, "start"), 0);
         }
       },
 
-      handleBackspaceKey: (
-        nodeId: string,
-        cursorPosition: number,
-        nodeContent: string
-      ) => {
-        const {
-          nodes,
-          findNode,
-          handleDelete,
-          findPreviousNode,
-          focusNodeTextarea,
-        } = get();
+      handleBackspaceKey: (nodeId: string, cursorPosition: number) => {
+        const { findNode, handleDelete, findPreviousNodeInHierarchy } = get();
         const [currentNode] = findNode(nodeId);
 
-        if (currentNode && nodeContent === "" && cursorPosition === 0) {
+        // Delete current node if it is empty and at set cursor a start of previous node
+        if (currentNode && currentNode.content === "" && cursorPosition === 0) {
+          const previousNode = findPreviousNodeInHierarchy(nodeId);
           handleDelete(nodeId);
-
-          const previousNode = findPreviousNode(nodeId);
+          // Try to focus on previous node
+          console.log("previousNode", previousNode);
           if (previousNode) {
+            // Set timeout to allow DOM to update
             setTimeout(() => {
               const previousInput = document.querySelector(
                 `[data-node-id="${previousNode.id}"]`
@@ -864,37 +831,30 @@ const useOutlinerStore = create<OutlinerStore>()(
         }
       },
 
-      handleTabKey: (nodeId: string) => {
+      handleTabKey: (nodeId: string | null) => {
+        if (!nodeId) return;
         get().indentNode(nodeId);
       },
 
-      handleShiftTabKey: (nodeId: string) => {
+      handleShiftTabKey: (nodeId: string | null) => {
+        if (!nodeId) return;
         get().unIndentNode(nodeId);
       },
 
-      handleArrowUp: (nodeId: string, cursorPosition: number) => {
-        if (cursorPosition === 0) {
-          const { findPreviousNodeInHierarchy, focusNodeTextarea } = get();
-          const previousNode = findPreviousNodeInHierarchy(nodeId);
-
-          if (previousNode) {
-            focusNodeTextarea(previousNode.id, "start");
-          }
+      handleArrowUp: (nodeId: string) => {
+        const { findPreviousNodeInHierarchy, focusNodeTextarea } = get();
+        const previousNode = findPreviousNodeInHierarchy(nodeId);
+        if (previousNode) {
+          focusNodeTextarea(previousNode.id, "start");
         }
       },
 
-      handleArrowDown: (
-        nodeId: string,
-        cursorPosition: number,
-        textLength: number
-      ) => {
-        if (cursorPosition === textLength) {
-          const { findNextNodeInHierarchy, focusNodeTextarea } = get();
-          const nextNode = findNextNodeInHierarchy(nodeId);
-
-          if (nextNode) {
-            focusNodeTextarea(nextNode.id, "start");
-          }
+      handleArrowDown: (nodeId: string | null) => {
+        if (!nodeId) return;
+        const { findNextNodeInHierarchy, focusNodeTextarea } = get();
+        const nextNode = findNextNodeInHierarchy(nodeId);
+        if (nextNode) {
+          focusNodeTextarea(nextNode.id, "start");
         }
       },
 
