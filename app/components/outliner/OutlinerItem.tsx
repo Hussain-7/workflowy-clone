@@ -17,7 +17,7 @@ const OutlinerItem: React.FC<{
 }> = ({ node, onNodeUpdate, onKeyDown, level, isLastNode }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { parseAndInsertStructuredText } = useOutlinerStore();
+  const { parseAndInsertStructuredText, addNodeAfter } = useOutlinerStore();
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
@@ -56,11 +56,12 @@ const OutlinerItem: React.FC<{
     const pastedText = e.clipboardData.getData("text");
     console.log("pastedText", pastedText);
 
-    // Check if the pasted text contains structured content (multiple lines with indentation or bullets)
-    const lines = pastedText.split("\n");
+    // Check if the pasted text contains multiple lines
+    const lines = pastedText.split("\n").filter((line) => line.trim() !== "");
     console.log("lines", lines);
     console.log("lines.length", lines.length);
 
+    // Check if it's structured content (bullets, numbers, indentation)
     const hasStructuredContent =
       lines.length > 1 &&
       lines.some((line) => {
@@ -73,32 +74,49 @@ const OutlinerItem: React.FC<{
         return hasBullet || hasNumber || hasIndent;
       });
 
+    // Check if it's simple multi-line text (no structure but multiple lines)
+    const isMultiLineText = lines.length > 1 && !hasStructuredContent;
+
     console.log("hasStructuredContent", hasStructuredContent);
+    console.log("isMultiLineText", isMultiLineText);
 
     if (hasStructuredContent) {
       e.preventDefault();
       console.log(
-        "Preventing default and calling parseAndInsertStructuredText"
+        "Preventing default and calling parseAndInsertStructuredText for structured content"
       );
 
-      // Parse the first line to update current node
-      const firstLine = lines[0];
-      const firstLineContent = firstLine
-        .trim()
-        .replace(/^[-*+]\s*/, "")
-        .replace(/^\d+\.\s*/, "");
+      // Clear current node content if it's empty, then insert all structured content
+      if (node.content.trim() === "") {
+        onNodeUpdate(node.id, { content: "" });
+        // Insert all content as siblings after the current empty node
+        parseAndInsertStructuredText(pastedText, node.id, true, false);
+      } else {
+        // Insert all content as siblings after the current node
+        parseAndInsertStructuredText(pastedText, node.id, true, false);
+      }
+    } else if (isMultiLineText) {
+      e.preventDefault();
+      console.log(
+        "Preventing default and creating separate nodes for multi-line text"
+      );
 
-      // Update current node with first line content
-      onNodeUpdate(node.id, { content: firstLineContent });
+      // Update current node with first line
+      onNodeUpdate(node.id, { content: lines[0] });
 
-      // Parse and insert the remaining structured text as children
-      const remainingText = lines.slice(1).join("\n");
-      if (remainingText.trim()) {
-        // Insert as children by passing the current node as parent
-        parseAndInsertStructuredText(remainingText, node.id, false, true);
+      // Create separate nodes for remaining lines
+      const remainingLines = lines.slice(1);
+      let currentNodeId = node.id;
+
+      for (const line of remainingLines) {
+        // Add each line as a new sibling node after the current one
+        const newNodeId = addNodeAfter(currentNodeId, line);
+        if (newNodeId) {
+          currentNodeId = newNodeId;
+        }
       }
     } else {
-      console.log("Not structured content, allowing normal paste");
+      console.log("Single line or normal paste, allowing default behavior");
     }
   };
 

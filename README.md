@@ -3,6 +3,7 @@
 - SHIFT activeNodeIdRef TO zustand and manage state from there which component is selected
 - Implement markdown per node. (Manage proper saving)
 - Copying a markdown and it then convert to proper workflowy based markdown.
+- Allow selecting and deleting multiple nodes and deleting the main node should open popup and then delet everything below.
 - Add input box for the untitled heading when clicking on empty items.
 - Add function to fetch the tree structure for header
 - Add search feature to filter node
