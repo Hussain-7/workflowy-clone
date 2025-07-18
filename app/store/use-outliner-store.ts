@@ -16,16 +16,21 @@ export interface OutlinerNode {
 
 interface OutlinerStore {
   // State
+  // overall data
   nodes: OutlinerNode[];
-  activeNodeId: string | null;
+  selectedNodeId: string | null;
+  isLoading: boolean;
+  // Current Focused node
 
   // Basic operations
   setNodes: (nodes: OutlinerNode[]) => void;
-  setActiveNodeId: (id: string | null) => void;
+  setSelectedNodeId: (id: string | null) => void;
+  setIsLoading: (loading: boolean) => void;
   initializeNodes: (defaultNodes: OutlinerNode[]) => void;
 
   // Utility methods
   getAllNodesFlattened: () => OutlinerNode[];
+  getNodeById: (id: string) => OutlinerNode | null;
   findNode: (id: string) => [OutlinerNode | null, OutlinerNode | null, number];
   findPreviousNode: (nodeId: string) => OutlinerNode | null;
   findPreviousNodeInHierarchy: (nodeId: string) => OutlinerNode | null;
@@ -37,7 +42,7 @@ interface OutlinerStore {
   handleDelete: (id: string) => void;
   addNodeAfter: (afterId: string | null, content?: string) => string | null;
   addNodeBefore: (beforeId: string, content?: string) => string | null;
-  handleAddChild: (parentId: string) => void;
+  handleAddChild: (parentId: string | null) => void;
   indentNode: (nodeId: string | null) => void;
   unIndentNode: (nodeId: string | null) => boolean;
 
@@ -74,13 +79,15 @@ const useOutlinerStore = create<OutlinerStore>()(
   persist(
     (set, get) => ({
       // Initial state
+      // All combined nodes
       nodes: [],
-      activeNodeId: null,
+      selectedNodeId: null,
+      isLoading: true,
 
       // Basic operations
       setNodes: (nodes) => set({ nodes }),
-      setActiveNodeId: (id) => set({ activeNodeId: id }),
-
+      setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+      setIsLoading: (loading) => set({ isLoading: loading }),
       initializeNodes: (defaultNodes) => {
         if (defaultNodes.length === 0) {
           const newNodeId = get().generateNodeId();
@@ -119,6 +126,12 @@ const useOutlinerStore = create<OutlinerStore>()(
 
         traverseInOrder(nodes);
         return flattenedNodes;
+      },
+
+      getNodeById: (id: string) => {
+        const { getAllNodesFlattened } = get();
+        const flattenedData = getAllNodesFlattened();
+        return flattenedData.find((doc) => doc.id === id) || null;
       },
 
       findNode: (id: string) => {
@@ -370,12 +383,12 @@ const useOutlinerStore = create<OutlinerStore>()(
         return null;
       },
 
-      handleAddChild: (parentId: string) => {
+      handleAddChild: (parentId: string | null) => {
         const { nodes, generateNodeId } = get();
         const newNodeId = generateNodeId();
         const newNode: OutlinerNode = {
           id: newNodeId,
-          content: "New child",
+          content: "",
           parent_id: parentId,
           children: [],
           meta_data: {
@@ -387,6 +400,13 @@ const useOutlinerStore = create<OutlinerStore>()(
         const updatedNodes = JSON.parse(
           JSON.stringify(nodes)
         ) as OutlinerNode[];
+
+        // If parentId is null, add to root level
+        if (parentId === null) {
+          updatedNodes.push(newNode);
+          set({ nodes: updatedNodes });
+          return;
+        }
 
         const addChildToNode = (
           nodes: OutlinerNode[],
@@ -411,8 +431,10 @@ const useOutlinerStore = create<OutlinerStore>()(
           return false;
         };
 
-        addChildToNode(updatedNodes, parentId, newNode);
-        set({ nodes: updatedNodes });
+        const nodeAdded = addChildToNode(updatedNodes, parentId, newNode);
+        if (nodeAdded) {
+          set({ nodes: updatedNodes });
+        }
       },
 
       indentNode: (nodeId: string | null) => {
@@ -928,6 +950,12 @@ const useOutlinerStore = create<OutlinerStore>()(
     {
       name: "outliner",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        // Set loading to false once rehydration is complete
+        if (state) {
+          state.setIsLoading(false);
+        }
+      },
     }
   )
 );

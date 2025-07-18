@@ -14,15 +14,15 @@ export interface OutlinerNode {
   };
 }
 
-const useOutliner = (default_nodes: OutlinerNode[]) => {
+const useOutliner = (nodeId?: string) => {
   // Reference for currently focused node ID
   const activeNodeIdRef = useRef<string | null>(null);
 
   const {
     nodes,
-    setNodes,
+    isLoading,
+    getNodeById,
     handleEdit,
-    generateNodeId,
     findNode,
     unIndentNode,
     addNodeAfter,
@@ -120,7 +120,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findNode, findPreviousNode, handleDelete, nodes]
+    [findNode, findPreviousNode, handleDelete]
   );
 
   // Handle Up Arrow - navigate to previous node
@@ -143,7 +143,7 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findPreviousNodeInHierarchy, focusNodeTextarea, nodes]
+    [findPreviousNodeInHierarchy, focusNodeTextarea]
   );
 
   // Handle Down Arrow - navigate to next node
@@ -164,29 +164,39 @@ const useOutliner = (default_nodes: OutlinerNode[]) => {
       }
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [findNextNodeInHierarchy, focusNodeTextarea, nodes]
+    [findNextNodeInHierarchy, focusNodeTextarea]
   );
 
-  // Start with a single node if there are none
-  // useEffect(() => {
-  //   if (nodes.length === 0) {
-  //     setNodes([
-  //       {
-  //         id: generateNodeId(),
-  //         content: "",
-  //         parent_id: null,
-  //         children: [],
-  //         meta_data: {
-  //           isEditing: true,
-  //           isExpanded: false,
-  //         },
-  //       },
-  //     ]);
-  //   }
-  // }, [nodes, generateNodeId]);
+  let nodeSelected: OutlinerNode | null = null;
+  if (nodeId) {
+    nodeSelected = getNodeById(nodeId);
+  }
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const didAutoAddRef = useRef(false);
+
+  useEffect(() => {
+    if (!nodeSelected || didAutoAddRef.current || isLoading) return;
+    if (nodeSelected.children.length === 0) {
+      didAutoAddRef.current = true;
+      handleAddChild(nodeSelected.id);
+    }
+  }, [nodeSelected, handleAddChild, isLoading]);
+
+  useEffect(() => {
+    // Only run when no nodes on current page and it is root page.
+    if (nodes.length > 0 || nodeId || didAutoAddRef.current || isLoading)
+      return;
+    didAutoAddRef.current = true;
+    handleAddChild(null);
+  }, [handleAddChild, nodeId, nodes, isLoading]);
 
   return {
-    nodes,
+    nodes: nodeSelected?.children || nodes,
+    nodeTitle: nodeSelected?.content || "",
     addNodeAfter,
     handleAddChild,
     handleDelete,
