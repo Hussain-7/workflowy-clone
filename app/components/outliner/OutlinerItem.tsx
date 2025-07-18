@@ -7,20 +7,18 @@ const LEFT_MARGIN = 35;
 // OutlinerItem component for recursive rendering
 const OutlinerItem: React.FC<{
   node: OutlinerNode;
-  onEdit: (id: string, content: string) => void;
+  onNodeUpdate: (id: string, data: Partial<OutlinerNode>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
-}> = ({ node, onEdit, onKeyDown, level, isLastNode }) => {
+}> = ({ node, onNodeUpdate, onKeyDown, level, isLastNode }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // State to track whether children are expanded or collapsed
-  const [expanded, setExpanded] = useState(true);
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpanded(!expanded);
+    onNodeUpdate(node.id, { meta_data: { isExpanded: !node.meta_data.isExpanded } });
   };
 
   // Auto-resize textarea based on content
@@ -53,7 +51,7 @@ const OutlinerItem: React.FC<{
       style={{ marginLeft: `${level === 0 ? 0 : LEFT_MARGIN}px` }}
     >
       {/* Only show connecting line if children are expanded */}
-      {node.children.length > 0 && expanded && (
+      {node.children.length > 0 && node.meta_data.isExpanded && (
         <div className="absolute left-2.25 top-[24px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-200"></div>
       )}
       <div className="relative pl-6 flex items-center justify-center mt-1.5">
@@ -63,7 +61,7 @@ const OutlinerItem: React.FC<{
             className="absolute left-[-20px] top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:cursor-pointer transition-colors"
             onClick={toggleExpand}
           >
-            {expanded ? (
+            {node.meta_data.isExpanded ? (
               <IoTriangleSharp className="w-2.25 h-2.25 text-gray-300 rotate-180 hover:text-gray-500" />
             ) : (
               <IoTriangleSharp className="w-2.25 h-2.25 text-gray-300 rotate-90 hover:text-gray-500" />
@@ -76,7 +74,7 @@ const OutlinerItem: React.FC<{
             navigate(`/doc/${node.id}`);
           }}
           className={`absolute left-0 top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center ${
-            node.children.length > 0 && !expanded
+            node.children.length > 0 && !node.meta_data.isExpanded
               ? "bg-gray-200 hover:cursor-pointer"
               : "hover:bg-gray-200"
           } rounded-full transition-colors`}
@@ -88,7 +86,7 @@ const OutlinerItem: React.FC<{
           ref={inputRef}
           value={node.content}
           onChange={(e) => {
-            onEdit(node.id, e.target.value);
+            onNodeUpdate(node.id, { content: e.target.value });
             autoResizeTextarea(e.target);
           }}
           onKeyDown={(e) => onKeyDown(e, node.id)}
@@ -111,13 +109,13 @@ const OutlinerItem: React.FC<{
         />
       </div>
       {/* Render children recursively only if expanded */}
-      {node.children.length > 0 && expanded && (
+      {node.children.length > 0 && node.meta_data.isExpanded && (
         <div className="children">
           {node.children.map((child, index) => (
             <OutlinerItem
               key={child.id}
               node={child}
-              onEdit={onEdit}
+              onNodeUpdate={onNodeUpdate}
               onKeyDown={onKeyDown}
               level={level + 1}
               isLastNode={index === node.children.length - 1}

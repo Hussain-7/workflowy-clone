@@ -39,7 +39,7 @@ interface OutlinerStore {
   findDeepestLastChild: (node: OutlinerNode) => OutlinerNode;
 
   // Node manipulation methods
-  handleEdit: (id: string, content: string) => void;
+  handleNodeUpdate: (id: string, data: Partial<OutlinerNode>) => void;
   handleDelete: (id: string) => void;
   addNodeAfter: (afterId: string | null, content?: string) => string | null;
   addNodeBefore: (beforeId: string, content?: string) => string | null;
@@ -183,24 +183,27 @@ const useOutlinerStore = create<OutlinerStore>()(
         return get().findDeepestLastChild(lastChild);
       },
 
-      // Node manipulation methods
-      handleEdit: (id: string, content: string) => {
+      handleNodeUpdate: (id: string, data: Partial<OutlinerNode>) => {
         const { nodes } = get();
 
-        const updateNodeContent = (
+        const updateNode = (
           nodes: OutlinerNode[],
           id: string,
-          content: string
+          data: Partial<OutlinerNode>
         ): OutlinerNode[] => {
           return nodes.map((node) => {
             if (node.id === id) {
-              return { ...node, content };
+              return {
+                ...node,
+                ...data,
+                meta_data: { ...node.meta_data, ...data.meta_data },
+              };
             }
 
             if (node.children.length > 0) {
               return {
                 ...node,
-                children: updateNodeContent(node.children, id, content),
+                children: updateNode(node.children, id, data),
               };
             }
 
@@ -208,10 +211,10 @@ const useOutlinerStore = create<OutlinerStore>()(
           });
         };
 
-        const updatedNodes = updateNodeContent(
+        const updatedNodes = updateNode(
           JSON.parse(JSON.stringify(nodes)),
           id,
-          content
+          data
         );
         set({ nodes: updatedNodes });
       },

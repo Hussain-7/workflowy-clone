@@ -21,7 +21,7 @@ const useOutliner = (nodeId?: string) => {
   const {
     nodes,
     getNodeById,
-    handleEdit,
+    handleNodeUpdate,
     addNodeAfter,
     handleAddChild,
     handleDelete,
@@ -133,7 +133,7 @@ const useOutliner = (nodeId?: string) => {
     addNodeAfter,
     handleAddChild,
     handleDelete,
-    handleEdit,
+    handleNodeUpdate,
     handleKeyDown,
   };
 };

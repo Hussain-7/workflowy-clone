@@ -11,7 +11,7 @@ type Props = {
 const OutlinePage = ({ nodeId }: Props) => {
   // Can be fetched from the db
 
-  const { nodes, nodeTitle, handleEdit, handleKeyDown, handleAddChild } =
+  const { nodes, nodeTitle, handleKeyDown, handleAddChild, handleNodeUpdate } =
     useOutliner(nodeId);
 
   return (
@@ -36,7 +36,7 @@ const OutlinePage = ({ nodeId }: Props) => {
               <OutlinerItem
                 key={node.id}
                 node={node}
-                onEdit={handleEdit}
+                onNodeUpdate={handleNodeUpdate}
                 onKeyDown={handleKeyDown}
                 level={0}
                 isLastNode={index === nodes.length - 1}
