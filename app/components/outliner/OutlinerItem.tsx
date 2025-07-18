@@ -65,7 +65,7 @@ const OutlinerItem: React.FC<{
     >
       {/* Only show connecting line if children are expanded */}
       {node.children.length > 0 && node.meta_data.isExpanded && (
-        <div className="absolute left-2.25 top-[30px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-200"></div>
+        <div className="absolute left-2.25 top-[30px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-100"></div>
       )}
       {/* Collapse/expand arrow - only shown if node has children */}
       <ItemExpandButton node={node} toggleExpand={toggleExpand} />
