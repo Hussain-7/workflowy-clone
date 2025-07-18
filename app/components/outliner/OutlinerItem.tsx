@@ -1,11 +1,11 @@
-import React, {  useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import type { OutlinerNode } from "~/store/use-outliner-store";
 import ItemBullet from "./ItemBullet";
 import ItemExpandButton from "./ItemExpandButton";
 
 const LEFT_MARGIN = 35;
 
-type Props={
+type Props = {
   node: OutlinerNode;
   onNodeUpdate: (id: string, data: Partial<OutlinerNode>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
@@ -17,7 +17,7 @@ type Props={
     e: React.ClipboardEvent<HTMLTextAreaElement>,
     id: string
   ) => void;
-}
+};
 
 // OutlinerItem component for recursive rendering
 const OutlinerItem: React.FC<Props> = ({
@@ -73,16 +73,22 @@ const OutlinerItem: React.FC<Props> = ({
         position: "relative",
       }}
     >
-      {/* Only show connecting line if children are expanded */}
-      {node.children.length > 0 && node.meta_data.isExpanded && (
-        <div className="absolute left-2.25 top-[30px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-100"></div>
+      {/* Connecting line with transition */}
+      {node.children.length > 0 && (
+        <div
+          className={`absolute left-2.25 top-[30px] w-5 border-l-2 border-gray-100 transition-all duration-300 ease-in-out ${
+            node.meta_data.isExpanded
+              ? "h-[calc(100%-30px)] opacity-100"
+              : "h-0 opacity-0"
+          }`}
+        ></div>
       )}
       {/* Collapse/expand arrow - only shown if node has children */}
       <ItemExpandButton node={node} toggleExpand={toggleExpand} />
       {/* Bullet point */}
       <ItemBullet node={node} />
       <div
-        className={`relative pl-7 flex items-center justify-center pt-1.5 ${
+        className={`relative pl-7 flex items-center justify-center pt-0.75 ${
           selected && multipleSelected ? "bg-blue-100" : "bg-transparent"
         }`}
       >

@@ -10,7 +10,7 @@ type Props = {
 const ItemExpandButton = ({ node, toggleExpand }: Props) => {
   return node.children.length > 0 ? (
     <div
-      className="expand-button absolute left-[-21px] top-[18px] -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:cursor-pointer transition-colors"
+      className="expand-button absolute left-[-21px] top-[15px] -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:cursor-pointer transition-colors"
       onClick={toggleExpand}
     >
       {node.meta_data.isExpanded ? (
