@@ -4,6 +4,8 @@ import { IoTriangleSharp } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import type { OutlinerNode } from "~/store/use-outliner-store";
 import useOutlinerStore from "~/store/use-outliner-store";
+import ItemBullet from "./ItemBullet";
+import ItemExpandButton from "./ItemExpandButton";
 
 const LEFT_MARGIN = 35;
 
@@ -14,10 +16,10 @@ const OutlinerItem: React.FC<{
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
-}> = ({ node, onNodeUpdate, onKeyDown, level, isLastNode }) => {
-  const navigate = useNavigate();
+  multipleSelected: boolean;
+}> = ({ node, onNodeUpdate, onKeyDown, level, multipleSelected }) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { parseAndInsertStructuredText, addNodeAfter } = useOutlinerStore();
+  const { handlePaste, isNodeSelected } = useOutlinerStore();
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
@@ -52,111 +54,98 @@ const OutlinerItem: React.FC<{
   }, [node.content]);
 
   // Handle paste events for structured text
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pastedText = e.clipboardData.getData("text");
-    console.log("pastedText", pastedText);
+  // const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  //   const pastedText = e.clipboardData.getData("text");
+  //   console.log("pastedText", pastedText);
 
-    // Check if the pasted text contains multiple lines
-    const lines = pastedText.split("\n").filter((line) => line.trim() !== "");
-    console.log("lines", lines);
-    console.log("lines.length", lines.length);
+  //   // Check if the pasted text contains multiple lines
+  //   const lines = pastedText.split("\n").filter((line) => line.trim() !== "");
+  //   console.log("lines", lines);
+  //   console.log("lines.length", lines.length);
 
-    // Check if it's structured content (bullets, numbers, indentation)
-    const hasStructuredContent =
-      lines.length > 1 &&
-      lines.some((line) => {
-        const hasBullet = line.match(/^\s*[-*+]\s/);
-        const hasNumber = line.match(/^\s*\d+\.\s/);
-        const hasIndent = line.match(/^\s{2,}/);
-        console.log(
-          `Line: "${line}" | Bullet: ${!!hasBullet} | Number: ${!!hasNumber} | Indent: ${!!hasIndent}`
-        );
-        return hasBullet || hasNumber || hasIndent;
-      });
+  //   // Check if it's structured content (bullets, numbers, indentation)
+  //   const hasStructuredContent =
+  //     lines.length > 1 &&
+  //     lines.some((line) => {
+  //       const hasBullet = line.match(/^\s*[-*+]\s/);
+  //       const hasNumber = line.match(/^\s*\d+\.\s/);
+  //       const hasIndent = line.match(/^\s{2,}/);
+  //       console.log(
+  //         `Line: "${line}" | Bullet: ${!!hasBullet} | Number: ${!!hasNumber} | Indent: ${!!hasIndent}`
+  //       );
+  //       return hasBullet || hasNumber || hasIndent;
+  //     });
 
-    // Check if it's simple multi-line text (no structure but multiple lines)
-    const isMultiLineText = lines.length > 1 && !hasStructuredContent;
+  //   // Check if it's simple multi-line text (no structure but multiple lines)
+  //   const isMultiLineText = lines.length > 1 && !hasStructuredContent;
 
-    console.log("hasStructuredContent", hasStructuredContent);
-    console.log("isMultiLineText", isMultiLineText);
+  //   console.log("hasStructuredContent", hasStructuredContent);
+  //   console.log("isMultiLineText", isMultiLineText);
 
-    if (hasStructuredContent) {
-      e.preventDefault();
-      console.log(
-        "Preventing default and calling parseAndInsertStructuredText for structured content"
-      );
+  //   if (hasStructuredContent) {
+  //     e.preventDefault();
+  //     console.log(
+  //       "Preventing default and calling parseAndInsertStructuredText for structured content"
+  //     );
 
-      // Clear current node content if it's empty, then insert all structured content
-      if (node.content.trim() === "") {
-        onNodeUpdate(node.id, { content: "" });
-        // Insert all content as siblings after the current empty node
-        parseAndInsertStructuredText(pastedText, node.id, true, false);
-      } else {
-        // Insert all content as siblings after the current node
-        parseAndInsertStructuredText(pastedText, node.id, true, false);
-      }
-    } else if (isMultiLineText) {
-      e.preventDefault();
-      console.log(
-        "Preventing default and creating separate nodes for multi-line text"
-      );
+  //     // Clear current node content if it's empty, then insert all structured content
+  //     if (node.content.trim() === "") {
+  //       onNodeUpdate(node.id, { content: "" });
+  //       // Insert all content as siblings after the current empty node
+  //       parseAndInsertStructuredText(pastedText, node.id, true, false);
+  //     } else {
+  //       // Insert all content as siblings after the current node
+  //       parseAndInsertStructuredText(pastedText, node.id, true, false);
+  //     }
+  //   } else if (isMultiLineText) {
+  //     e.preventDefault();
+  //     console.log(
+  //       "Preventing default and creating separate nodes for multi-line text"
+  //     );
 
-      // Update current node with first line
-      onNodeUpdate(node.id, { content: lines[0] });
+  //     // Update current node with first line
+  //     onNodeUpdate(node.id, { content: lines[0] });
 
-      // Create separate nodes for remaining lines
-      const remainingLines = lines.slice(1);
-      let currentNodeId = node.id;
+  //     // Create separate nodes for remaining lines
+  //     const remainingLines = lines.slice(1);
+  //     let currentNodeId = node.id;
 
-      for (const line of remainingLines) {
-        // Add each line as a new sibling node after the current one
-        const newNodeId = addNodeAfter(currentNodeId, line);
-        if (newNodeId) {
-          currentNodeId = newNodeId;
-        }
-      }
-    } else {
-      console.log("Single line or normal paste, allowing default behavior");
-    }
-  };
+  //     for (const line of remainingLines) {
+  //       // Add each line as a new sibling node after the current one
+  //       const newNodeId = addNodeAfter(currentNodeId, line);
+  //       if (newNodeId) {
+  //         currentNodeId = newNodeId;
+  //       }
+  //     }
+  //   } else {
+  //     console.log("Single line or normal paste, allowing default behavior");
+  //   }
+  // };
 
+  // Check if this node is selected
+  const selected = isNodeSelected(node.id);
   return (
     <div
-      className="outliner-item relative"
-      style={{ marginLeft: `${level === 0 ? 0 : LEFT_MARGIN}px` }}
+      className={`outliner-item relative transition-colors`}
+      style={{
+        marginLeft: `${level === 0 ? 0 : LEFT_MARGIN}px`,
+        position: "relative",
+      }}
     >
       {/* Only show connecting line if children are expanded */}
       {node.children.length > 0 && node.meta_data.isExpanded && (
-        <div className="absolute left-2.25 top-[24px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-200"></div>
+        <div className="absolute left-2.25 top-[30px] w-5 h-[calc(100%-24px)] border-l-2 border-gray-200"></div>
       )}
-      <div className="relative pl-6 flex items-center justify-center mt-1.5">
-        {/* Collapse/expand arrow - only shown if node has children */}
-        {node.children.length > 0 && (
-          <div
-            className="absolute left-[-20px] top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:cursor-pointer transition-colors"
-            onClick={toggleExpand}
-          >
-            {node.meta_data.isExpanded ? (
-              <IoTriangleSharp className="w-2.25 h-2.25 text-gray-300 rotate-180 hover:text-gray-500" />
-            ) : (
-              <IoTriangleSharp className="w-2.25 h-2.25 text-gray-300 rotate-90 hover:text-gray-500" />
-            )}
-          </div>
-        )}
-        {/* Bullet point */}
-        <div
-          onClick={() => {
-            navigate(`/doc/${node.id}`);
-          }}
-          className={`absolute left-0 top-3 -translate-y-1/2 w-5 h-5 flex items-center justify-center ${
-            node.children.length > 0 && !node.meta_data.isExpanded
-              ? "bg-gray-200 hover:cursor-pointer"
-              : "hover:bg-gray-200"
-          } rounded-full transition-colors`}
-        >
-          <FaCircle className="w-2 h-2 aspect-square text-gray-700" />
-        </div>
-        {/* Borderless, transparent input field with text wrapping */}
+      {/* Collapse/expand arrow - only shown if node has children */}
+      <ItemExpandButton node={node} toggleExpand={toggleExpand} />
+      {/* Bullet point */}
+      <ItemBullet node={node} />
+      <div
+        className={`relative pl-6 flex items-center justify-center pt-1.5 ${
+          selected && multipleSelected ? "bg-blue-100" : "bg-transparent"
+        }`}
+      >
+        {/* Node content textarea */}
         <textarea
           ref={inputRef}
           value={node.content}
@@ -165,14 +154,14 @@ const OutlinerItem: React.FC<{
             autoResizeTextarea(e.target);
           }}
           onKeyDown={(e) => onKeyDown(e, node.id)}
-          onPaste={handlePaste}
-          onMouseDown={(e) =>
+          onPaste={(e) => handlePaste(e, node.id)}
+          onMouseDown={(e) => {
             onKeyDown(
               e as unknown as React.KeyboardEvent<HTMLTextAreaElement>,
               node.id
-            )
-          }
-          className="w-full text-black border-none focus:ring-0 outline-none bg-transparent resize-none overflow-hidden block"
+            );
+          }}
+          className={`w-full text-black border-none focus:ring-0 outline-none resize-none overflow-hidden block selection:bg-blue-100`}
           autoFocus={node.meta_data.isEditing}
           placeholder="Type here..."
           data-node-id={node.id}
@@ -195,6 +184,7 @@ const OutlinerItem: React.FC<{
               onKeyDown={onKeyDown}
               level={level + 1}
               isLastNode={index === node.children.length - 1}
+              multipleSelected={multipleSelected}
             />
           ))}
         </div>

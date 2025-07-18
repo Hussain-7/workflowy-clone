@@ -31,6 +31,10 @@ const useOutliner = (nodeId?: string) => {
     handleShiftTabKey,
     handleArrowDown,
     handleArrowUp,
+    selectedNodeIds,
+    getSelectedNodes,
+    deleteSelectedNodes,
+    clearSelection,
   } = useOutlinerStore();
 
   // Handle keyboard event to maintain compatibility with component props
@@ -41,6 +45,7 @@ const useOutliner = (nodeId?: string) => {
     },
     []
   );
+  console.log("activeNodeIdRef.current", activeNodeIdRef.current);
 
   // Handle Enter key - create new item with different behaviors based on cursor position
   useHotkeys(
@@ -79,18 +84,22 @@ const useOutliner = (nodeId?: string) => {
     { enableOnFormTags: ["TEXTAREA"] },
     [handleShiftTabKey, activeNodeIdRef.current]
   );
-
   // Handle Backspace key - delete node if empty
   useHotkeys(
     "backspace",
     (e) => {
       if (!activeNodeIdRef.current) return;
 
+      if (selectedNodeIds.length > 1) {
+        // Delete selected nodes
+        deleteSelectedNodes();
+        return;
+      }
       const targetEl = e.target as HTMLTextAreaElement;
       handleBackspaceKey(activeNodeIdRef.current, targetEl.selectionStart);
     },
     { enableOnFormTags: ["TEXTAREA"] },
-    [handleBackspaceKey, activeNodeIdRef.current]
+    [handleBackspaceKey, activeNodeIdRef.current, selectedNodeIds]
   );
 
   // Handle Up Arrow - navigate to previous node
@@ -130,11 +139,15 @@ const useOutliner = (nodeId?: string) => {
   return {
     nodes: nodeSelected?.children || nodes,
     nodeTitle: nodeSelected?.content || "",
+    multipleSelected: selectedNodeIds.length > 1,
     addNodeAfter,
     handleAddChild,
     handleDelete,
     handleNodeUpdate,
     handleKeyDown,
+    getSelectedNodes,
+    deleteSelectedNodes,
+    clearSelection,
   };
 };
 

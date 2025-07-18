@@ -11,6 +11,7 @@ export interface OutlinerNode {
   meta_data: {
     isEditing?: boolean;
     isExpanded?: boolean;
+    isSelected?: boolean;
   };
 }
 
@@ -19,12 +20,18 @@ interface OutlinerStore {
   // overall data
   nodes: OutlinerNode[];
   selectedNodeId: string | null;
+  selectedNodeIds: string[];
+  isSelecting: boolean;
+  selectionStartNodeId: string | null;
   isLoading: boolean;
   // Current Focused node
 
   // Basic operations
   setNodes: (nodes: OutlinerNode[]) => void;
   setSelectedNodeId: (id: string | null) => void;
+  setSelectedNodeIds: (ids: string[]) => void;
+  setIsSelecting: (selecting: boolean) => void;
+  setSelectionStartNodeId: (id: string | null) => void;
   setIsLoading: (loading: boolean) => void;
   initializeNodes: (defaultNodes: OutlinerNode[]) => void;
 
@@ -64,6 +71,22 @@ interface OutlinerStore {
     insertAfter?: boolean,
     asChildren?: boolean
   ) => void;
+  handlePaste: (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    nodeId: string
+  ) => void;
+
+  // Selection methods
+  startSelection: (nodeId: string) => void;
+  updateSelection: (nodeId: string) => void;
+  endSelection: () => void;
+  clearSelection: () => void;
+  updateNodeSelection: (nodeId: string, isSelected: boolean) => void;
+  isNodeSelected: (nodeId: string) => boolean;
+  // For copying selected nodes
+  getSelectedNodes: () => OutlinerNode[];
+  // For deleting selected nodes
+  deleteSelectedNodes: () => void;
 
   // Future API methods
   fetchNodes: () => Promise<void>;
@@ -77,11 +100,17 @@ const useOutlinerStore = create<OutlinerStore>()(
       // All combined nodes
       nodes: [],
       selectedNodeId: null,
+      selectedNodeIds: [],
+      isSelecting: false,
+      selectionStartNodeId: null,
       isLoading: true,
 
       // Basic operations
       setNodes: (nodes) => set({ nodes }),
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+      setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
+      setIsSelecting: (selecting) => set({ isSelecting: selecting }),
+      setSelectionStartNodeId: (id) => set({ selectionStartNodeId: id }),
       setIsLoading: (loading) => set({ isLoading: loading }),
       initializeNodes: (defaultNodes) => {
         if (defaultNodes.length === 0) {
@@ -257,7 +286,7 @@ const useOutlinerStore = create<OutlinerStore>()(
           children: [],
           meta_data: {
             isEditing: true,
-            isExpanded: false,
+            isExpanded: true,
           },
         };
 
@@ -314,7 +343,7 @@ const useOutlinerStore = create<OutlinerStore>()(
           children: [],
           meta_data: {
             isEditing: true,
-            isExpanded: false,
+            isExpanded: true,
           },
         };
 
@@ -366,7 +395,7 @@ const useOutlinerStore = create<OutlinerStore>()(
           children: [],
           meta_data: {
             isEditing: true,
-            isExpanded: false,
+            isExpanded: true,
           },
         };
 
@@ -724,7 +753,7 @@ const useOutlinerStore = create<OutlinerStore>()(
             children: [],
             meta_data: {
               isEditing: true,
-              isExpanded: false,
+              isExpanded: true,
             },
           };
 
@@ -852,6 +881,7 @@ const useOutlinerStore = create<OutlinerStore>()(
       handleArrowUp: (nodeId: string) => {
         const { findPreviousNodeInHierarchy, focusNodeTextarea } = get();
         const previousNode = findPreviousNodeInHierarchy(nodeId);
+        console.log("previousNode", previousNode);
         if (previousNode) {
           focusNodeTextarea(previousNode.id, "start");
         }
@@ -861,6 +891,7 @@ const useOutlinerStore = create<OutlinerStore>()(
         if (!nodeId) return;
         const { findNextNodeInHierarchy, focusNodeTextarea } = get();
         const nextNode = findNextNodeInHierarchy(nodeId);
+        console.log("nextNode", nextNode);
         if (nextNode) {
           focusNodeTextarea(nextNode.id, "start");
         }
@@ -1065,6 +1096,272 @@ const useOutlinerStore = create<OutlinerStore>()(
           }
         } else {
           console.log("Failed to insert nodes");
+        }
+      },
+
+      handlePaste: (
+        e: React.ClipboardEvent<HTMLTextAreaElement>,
+        nodeId: string
+      ) => {
+        const pastedText = e.clipboardData.getData("text");
+        const {
+          handleNodeUpdate,
+          getNodeById,
+          parseAndInsertStructuredText,
+          addNodeAfter,
+        } = get();
+        const node = getNodeById(nodeId);
+        if (!node) return;
+
+        // Check if the pasted text contains multiple lines
+        const lines = pastedText
+          .split("\n")
+          .filter((line) => line.trim() !== "");
+        console.log("lines", lines);
+        console.log("lines.length", lines.length);
+
+        // Check if it's structured content (bullets, numbers, indentation)
+        const hasStructuredContent =
+          lines.length > 1 &&
+          lines.some((line) => {
+            const hasBullet = line.match(/^\s*[-*+]\s/);
+            const hasNumber = line.match(/^\s*\d+\.\s/);
+            const hasIndent = line.match(/^\s{2,}/);
+            console.log(
+              `Line: "${line}" | Bullet: ${!!hasBullet} | Number: ${!!hasNumber} | Indent: ${!!hasIndent}`
+            );
+            return hasBullet || hasNumber || hasIndent;
+          });
+
+        // Check if it's simple multi-line text (no structure but multiple lines)
+        const isMultiLineText = lines.length > 1 && !hasStructuredContent;
+
+        console.log("hasStructuredContent", hasStructuredContent);
+        console.log("isMultiLineText", isMultiLineText);
+
+        if (hasStructuredContent) {
+          e.preventDefault();
+          console.log(
+            "Preventing default and calling parseAndInsertStructuredText for structured content"
+          );
+
+          // Clear current node content if it's empty, then insert all structured content
+          if (node.content.trim() === "") {
+            handleNodeUpdate(node.id, { content: "" });
+            // Insert all content as siblings after the current empty node
+            parseAndInsertStructuredText(pastedText, node.id, true, false);
+          } else {
+            // Insert all content as siblings after the current node
+            parseAndInsertStructuredText(pastedText, node.id, true, false);
+          }
+        } else if (isMultiLineText) {
+          e.preventDefault();
+          console.log(
+            "Preventing default and creating separate nodes for multi-line text"
+          );
+
+          // Update current node with first line
+          handleNodeUpdate(node.id, { content: lines[0] });
+
+          // Create separate nodes for remaining lines
+          const remainingLines = lines.slice(1);
+          let currentNodeId = node.id;
+
+          for (const line of remainingLines) {
+            // Add each line as a new sibling node after the current one
+            const newNodeId = addNodeAfter(currentNodeId, line);
+            if (newNodeId) {
+              currentNodeId = newNodeId;
+            }
+          }
+        } else {
+          console.log("Single line or normal paste, allowing default behavior");
+        }
+      },
+
+      // Selection methods
+      startSelection: (nodeId: string) => {
+        console.log("Starting selection from node:", nodeId);
+
+        // First clear existing selections to avoid stale state
+        get().clearSelection();
+
+        // Then set new selection state
+        set({
+          isSelecting: true,
+          selectionStartNodeId: nodeId,
+          selectedNodeIds: [nodeId],
+        });
+
+        // Mark the node as selected in its metadata
+        get().updateNodeSelection(nodeId, true);
+      },
+
+      updateSelection: (nodeId: string) => {
+        const { selectionStartNodeId, isSelecting } = get();
+        console.log("Updating selection", {
+          nodeId,
+          selectionStartNodeId,
+          isSelecting,
+        });
+
+        if (!isSelecting || !selectionStartNodeId) {
+          console.log(
+            "Not updating selection: not in selecting mode or no start node"
+          );
+          return;
+        }
+
+        // Get flattened nodes to determine range
+        const flattenedNodes = get().getAllNodesFlattened();
+        console.log("Flattened nodes count:", flattenedNodes.length);
+
+        const startIndex = flattenedNodes.findIndex(
+          (n) => n.id === selectionStartNodeId
+        );
+        const endIndex = flattenedNodes.findIndex((n) => n.id === nodeId);
+        console.log("Selection indices:", { startIndex, endIndex });
+
+        if (startIndex === -1 || endIndex === -1) {
+          console.log("Selection indices not found");
+          return;
+        }
+
+        // Clear all selections first
+        get().clearSelection();
+
+        // Select range between start and end (inclusive)
+        const minIndex = Math.min(startIndex, endIndex);
+        const maxIndex = Math.max(startIndex, endIndex);
+        console.log("Selection range:", { minIndex, maxIndex });
+
+        // Build selected IDs list and update node metadata
+        const selectedIds: string[] = [];
+        for (let i = minIndex; i <= maxIndex; i++) {
+          const node = flattenedNodes[i];
+          selectedIds.push(node.id);
+        }
+
+        // Update the store's selectedNodeIds state
+        set({ selectedNodeIds: selectedIds });
+
+        // Now update node metadata for all selected nodes
+        selectedIds.forEach((id) => {
+          get().updateNodeSelection(id, true);
+        });
+
+        console.log("Selected nodes:", selectedIds);
+      },
+
+      endSelection: () => {
+        console.log("Ending selection");
+        set({
+          isSelecting: false,
+          selectionStartNodeId: null,
+        });
+      },
+
+      clearSelection: () => {
+        const { nodes } = get();
+        const updatedNodes = JSON.parse(
+          JSON.stringify(nodes)
+        ) as OutlinerNode[];
+
+        const clearNodeSelection = (nodes: OutlinerNode[]): void => {
+          for (let node of nodes) {
+            node.meta_data.isSelected = false;
+            if (node.children.length > 0) {
+              clearNodeSelection(node.children);
+            }
+          }
+        };
+
+        clearNodeSelection(updatedNodes);
+        set({
+          nodes: updatedNodes,
+          selectedNodeIds: [],
+        });
+      },
+
+      updateNodeSelection: (nodeId: string, isSelected: boolean) => {
+        const { nodes } = get();
+        const updatedNodes = JSON.parse(
+          JSON.stringify(nodes)
+        ) as OutlinerNode[];
+
+        const updateNode = (
+          nodes: OutlinerNode[],
+          id: string,
+          selected: boolean
+        ): boolean => {
+          for (let node of nodes) {
+            if (node.id === id) {
+              node.meta_data.isSelected = selected;
+              return true;
+            }
+            if (node.children.length > 0) {
+              const updated = updateNode(node.children, id, selected);
+              if (updated) return true;
+            }
+          }
+          return false;
+        };
+
+        updateNode(updatedNodes, nodeId, isSelected);
+        set({ nodes: updatedNodes });
+      },
+
+      isNodeSelected: (nodeId: string) => {
+        const { selectedNodeIds } = get();
+        return selectedNodeIds.includes(nodeId);
+      },
+
+      getSelectedNodes: () => {
+        const { selectedNodeIds } = get();
+        const flattenedNodes = get().getAllNodesFlattened();
+        return flattenedNodes.filter((n) => selectedNodeIds.includes(n.id));
+      },
+
+      deleteSelectedNodes: () => {
+        const { selectedNodeIds } = get();
+        if (selectedNodeIds.length === 0) return;
+
+        const { nodes } = get();
+        const updatedNodes = JSON.parse(
+          JSON.stringify(nodes)
+        ) as OutlinerNode[];
+
+        const deleteNodes = (nodes: OutlinerNode[]): OutlinerNode[] => {
+          return nodes.filter((node) => {
+            if (selectedNodeIds.includes(node.id)) {
+              return false; // Remove this node
+            }
+
+            if (node.children.length > 0) {
+              node.children = deleteNodes(node.children);
+            }
+
+            return true;
+          });
+        };
+
+        const topNodeId = selectedNodeIds[0];
+        const topNode = get().getNodeById(topNodeId);
+        console.log("topNodeId", topNode);
+
+        const filteredNodes = deleteNodes(updatedNodes);
+        set({
+          nodes: filteredNodes,
+          selectedNodeIds: [],
+          selectionStartNodeId: null,
+          isSelecting: false,
+        });
+        const previousNode = get().findPreviousNodeInHierarchy(topNodeId);
+        console.log("previousNode:", previousNode);
+        if (previousNode) {
+          setTimeout(() => {
+            get().focusNodeTextarea(previousNode.id, "end");
+          }, 0);
         }
       },
 
