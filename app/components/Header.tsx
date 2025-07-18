@@ -23,12 +23,12 @@ const Header = (props: Props) => {
     <div className="w-full border-b border-black/10 h-[50px] px-2 flex items-center justify-between">
       {/* Left side elements */}
       <div className="flex items-center space-x-0 md:space-x-2">
-        <button className="p-2 rounded-md hover:bg-gray-100">
+        <button className="p-1 md:p-2 rounded-md hover:bg-gray-100">
           <FiMenu className="w-5 h-5 text-gray-400" />
         </button>
         <div className="flex items-center space-x-1">
           <button
-            className="p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
+            className="p-1 md:p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => {
               navigate(-1);
             }}
@@ -36,7 +36,7 @@ const Header = (props: Props) => {
             <FiChevronLeft className="w-5 h-5 text-gray-400" />
           </button>
           <button
-            className="p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
+            className="p-1 md:p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => {
               navigate(1);
             }}
@@ -45,7 +45,7 @@ const Header = (props: Props) => {
           </button>
         </div>
         <button
-          className="p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
+          className="p-1 md:p-2 rounded-md hover:bg-gray-100 hover:cursor-pointer"
           onClick={() => navigate("/")}
         >
           <FiHome className="w-5 h-5 text-gray-400" />

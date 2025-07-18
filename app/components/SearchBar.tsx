@@ -13,7 +13,7 @@ const SearchBar = (props: Props) => {
         name="search-bar"
         type="text"
         placeholder="Search"
-        className="bg-transparent border-none outline-none text-sm w-32 md:w-40 text-gray-700 placeholder-gray-600 caret-gray-700"
+        className="bg-transparent border-none outline-none text-sm hidden md:flex md:w-40 text-gray-700 placeholder-gray-600 caret-gray-700"
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
