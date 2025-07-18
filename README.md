@@ -13,5 +13,6 @@
 
 - copying markdowns add unessary empty bullet above or below the copied markdown
 - After deletion or copying the cursor should be in expected place
+- On all functions cursor position should be properly handled.
 
 ## Features Next

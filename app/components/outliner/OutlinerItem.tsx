@@ -1,25 +1,35 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FaCircle } from "react-icons/fa";
-import { IoTriangleSharp } from "react-icons/io5";
-import { useNavigate } from "react-router";
+import React, {  useRef, useEffect } from "react";
 import type { OutlinerNode } from "~/store/use-outliner-store";
-import useOutlinerStore from "~/store/use-outliner-store";
 import ItemBullet from "./ItemBullet";
 import ItemExpandButton from "./ItemExpandButton";
 
 const LEFT_MARGIN = 35;
 
-// OutlinerItem component for recursive rendering
-const OutlinerItem: React.FC<{
+type Props={
   node: OutlinerNode;
   onNodeUpdate: (id: string, data: Partial<OutlinerNode>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
   level: number;
   isLastNode: boolean;
+  isNodeSelected: (id: string) => boolean;
   multipleSelected: boolean;
-}> = ({ node, onNodeUpdate, onKeyDown, level, multipleSelected }) => {
+  handlePaste: (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    id: string
+  ) => void;
+}
+
+// OutlinerItem component for recursive rendering
+const OutlinerItem: React.FC<Props> = ({
+  node,
+  onNodeUpdate,
+  onKeyDown,
+  level,
+  multipleSelected,
+  isNodeSelected,
+  handlePaste,
+}) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { handlePaste, isNodeSelected } = useOutlinerStore();
 
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
@@ -72,7 +82,7 @@ const OutlinerItem: React.FC<{
       {/* Bullet point */}
       <ItemBullet node={node} />
       <div
-        className={`relative pl-6 flex items-center justify-center pt-1.5 ${
+        className={`relative pl-7 flex items-center justify-center pt-1.5 ${
           selected && multipleSelected ? "bg-blue-100" : "bg-transparent"
         }`}
       >
@@ -116,6 +126,8 @@ const OutlinerItem: React.FC<{
               level={level + 1}
               isLastNode={index === node.children.length - 1}
               multipleSelected={multipleSelected}
+              isNodeSelected={isNodeSelected}
+              handlePaste={handlePaste}
             />
           ))}
         </div>

@@ -14,6 +14,8 @@ const OutlinePage = ({ nodeId }: Props) => {
     startSelection,
     updateSelection,
     isSelecting,
+    handlePaste,
+    isNodeSelected,
   } = useOutlinerStore();
   
   const outlineRef = useRef<HTMLDivElement>(null);
@@ -124,6 +126,8 @@ const OutlinePage = ({ nodeId }: Props) => {
                 level={0}
                 isLastNode={index === nodes.length - 1}
                 multipleSelected={multipleSelected}
+                isNodeSelected={isNodeSelected}
+                handlePaste={handlePaste}
               />
             ))}
             <AddItemButton
