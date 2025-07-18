@@ -7,7 +7,6 @@ import {
   FiShare2,
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router";
-import { mainDocuments } from "@/constants/data";
 import type { OutlinerNode } from "@/hooks/use-outliner";
 import SearchBar from "./SearchBar";
 import useOutlinerStore from "~/store/use-outliner-store";
