@@ -2,13 +2,14 @@ import React, { useRef, useEffect } from "react";
 import type { OutlinerNode } from "~/store/use-outliner-store";
 import ItemBullet from "./ItemBullet";
 import ItemExpandButton from "./ItemExpandButton";
+import TiptapEditor from "./TiptapEditor";
 
 const LEFT_MARGIN = 35;
 
 type Props = {
   node: OutlinerNode;
   onNodeUpdate: (id: string, data: Partial<OutlinerNode>) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => void;
+  onKeyDown: (id: string) => void;
   level: number;
   isLastNode: boolean;
   isNodeSelected: (id: string) => boolean;
@@ -29,8 +30,6 @@ const OutlinerItem: React.FC<Props> = ({
   isNodeSelected,
   handlePaste,
 }) => {
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
   // Toggle children visibility
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,32 +38,9 @@ const OutlinerItem: React.FC<Props> = ({
     });
   };
 
-  // Auto-resize textarea based on content
-  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto"; // Reset height to recalculate
-    textarea.style.height = textarea.scrollHeight + "px";
-  };
-
-  // Focus on the input field when in editing mode and resize
-  useEffect(() => {
-    if (node.meta_data.isEditing && inputRef.current) {
-      inputRef.current.focus();
-      // Place cursor at the end of text
-      const length = inputRef.current.value.length;
-      inputRef.current.setSelectionRange(length, length);
-      autoResizeTextarea(inputRef.current);
-    }
-  }, [node.meta_data.isEditing]);
-
-  // Auto-resize on content change
-  useEffect(() => {
-    if (inputRef.current) {
-      autoResizeTextarea(inputRef.current);
-    }
-  }, [node.content]);
-
   // Check if this node is selected
   const selected = isNodeSelected(node.id);
+  const hasChildren = node.children.length > 0;
   return (
     <div
       className={`outliner-item relative transition-colors`}
@@ -73,8 +49,8 @@ const OutlinerItem: React.FC<Props> = ({
         position: "relative",
       }}
     >
-      {/* Connecting line with transition */}
-      {node.children.length > 0 && (
+      {/* Connecting lines on left */}
+      {hasChildren && (
         <div
           className={`absolute left-2.25 top-[30px] w-5 border-l-2 border-gray-100 transition-all duration-300 ease-in-out ${
             node.meta_data.isExpanded
@@ -87,41 +63,22 @@ const OutlinerItem: React.FC<Props> = ({
       <ItemExpandButton node={node} toggleExpand={toggleExpand} />
       {/* Bullet point */}
       <ItemBullet node={node} />
+
       <div
         className={`relative pl-7 flex items-center justify-center pt-0.75 ${
           selected && multipleSelected ? "bg-blue-100" : "bg-transparent"
         }`}
       >
         {/* Node content textarea */}
-        <textarea
-          ref={inputRef}
-          value={node.content}
-          onChange={(e) => {
-            onNodeUpdate(node.id, { content: e.target.value });
-            autoResizeTextarea(e.target);
-          }}
-          onKeyDown={(e) => onKeyDown(e, node.id)}
-          onPaste={(e) => handlePaste(e, node.id)}
-          onMouseDown={(e) => {
-            onKeyDown(
-              e as unknown as React.KeyboardEvent<HTMLTextAreaElement>,
-              node.id
-            );
-          }}
-          className={`w-full text-black border-none focus:ring-0 outline-none resize-none overflow-hidden block selection:bg-blue-100`}
-          autoFocus={node.meta_data.isEditing}
-          placeholder="Type here..."
-          data-node-id={node.id}
-          rows={1}
-          style={{
-            lineHeight: "24px",
-            margin: 0,
-            padding: 0,
-          }}
+        <TiptapEditor
+          node={node}
+          onNodeUpdate={onNodeUpdate}
+          onKeyDown={onKeyDown}
+          handlePaste={handlePaste}
         />
       </div>
       {/* Render children recursively only if expanded */}
-      {node.children.length > 0 && node.meta_data.isExpanded && (
+      {hasChildren && node.meta_data.isExpanded && (
         <div className="children">
           {node.children.map((child, index) => (
             <OutlinerItem

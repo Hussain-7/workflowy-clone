@@ -1,6 +1,7 @@
 import React from "react";
 import { IoTriangleSharp } from "react-icons/io5";
 import type { OutlinerNode } from "~/store/use-outliner-store";
+import { extractHeadingLevel, MarginForHeading } from "./ItemBullet";
 
 type Props = {
   node: OutlinerNode;
@@ -8,8 +9,15 @@ type Props = {
 };
 
 const ItemExpandButton = ({ node, toggleExpand }: Props) => {
+  const level = extractHeadingLevel(
+    node.content
+  ) as keyof typeof MarginForHeading;
+  const margin = MarginForHeading[level];
   return node.children.length > 0 ? (
     <div
+      style={{
+        top: margin,
+      }}
       className="expand-button absolute left-[-21px] top-[15px] -translate-y-1/2 w-5 h-5 flex items-center justify-center hover:cursor-pointer transition-colors"
       onClick={toggleExpand}
     >

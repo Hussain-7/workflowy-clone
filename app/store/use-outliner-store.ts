@@ -55,8 +55,15 @@ interface OutlinerStore {
   unIndentNode: (nodeId: string | null) => boolean;
 
   // Keyboard handling methods
-  handleEnterKey: (nodeId: string, cursorPosition: number) => void;
-  handleBackspaceKey: (nodeId: string, cursorPosition: number) => void;
+  handleEnterKey: (
+    nodeId: string,
+    nodeText: string,
+    isEmpty: boolean,
+    type: "start" | "middle" | "end",
+    leftContent: string,
+    rightContent: string
+  ) => void;
+  handleBackspaceKey: (nodeId: string, isEmpty: boolean) => void;
   handleTabKey: (nodeId: string | null) => void;
   handleShiftTabKey: (nodeId: string | null) => void;
   handleArrowUp: (nodeId: string) => void;
@@ -658,9 +665,7 @@ const useOutlinerStore = create<OutlinerStore>()(
 
           if (success) {
             set({ nodes: clonedNodes });
-            setTimeout(() => {
-              focusNodeTextarea(nodeId);
-            }, 0);
+            focusNodeTextarea(nodeId);
           }
           return success;
         }
@@ -669,7 +674,14 @@ const useOutlinerStore = create<OutlinerStore>()(
       },
 
       // Keyboard handling methods
-      handleEnterKey: (nodeId: string, cursorPosition: number) => {
+      handleEnterKey: (
+        nodeId: string,
+        nodeText: string,
+        isEmpty: boolean,
+        type: "start" | "middle" | "end",
+        leftContent: string,
+        rightContent: string
+      ) => {
         const {
           nodes,
           findNode,
@@ -680,40 +692,36 @@ const useOutlinerStore = create<OutlinerStore>()(
           focusNodeTextarea,
         } = get();
         const [currentNode] = findNode(nodeId);
-        const nodeContent = currentNode?.content || "";
+        const nodeContent = nodeText || "";
         if (!currentNode) return;
-
         // Special case: If node is empty, and not at root level, unindent it
-        if (nodeContent.trim() === "") {
+        if (isEmpty) {
           const status = unIndentNode(nodeId);
           if (!status) {
             const newNodeId = addNodeAfter(nodeId, "");
             if (newNodeId) {
-              setTimeout(() => focusNodeTextarea(newNodeId), 0);
+              focusNodeTextarea(newNodeId);
             }
           }
           return;
         }
 
         // Case 1: Cursor at beginning - add node above
-        if (cursorPosition === 0) {
+        if (type === "start") {
           const newNodeId = addNodeBefore(nodeId, "");
           if (newNodeId) {
-            setTimeout(() => focusNodeTextarea(newNodeId), 0);
+            focusNodeTextarea(newNodeId);
           }
         }
         // Case 2: Cursor at the end - add node after
-        else if (cursorPosition === nodeContent.length) {
+        else if (type === "end") {
           const newNodeId = addNodeAfter(nodeId, "");
           if (newNodeId) {
-            setTimeout(() => focusNodeTextarea(newNodeId), 0);
+            focusNodeTextarea(newNodeId);
           }
         }
         // Case 3: Cursor in the middle - split content
         else {
-          const leftContent = nodeContent.substring(0, cursorPosition);
-          const rightContent = nodeContent.substring(cursorPosition);
-
           const updatedNodes = JSON.parse(
             JSON.stringify(nodes)
           ) as OutlinerNode[];
@@ -838,32 +846,23 @@ const useOutlinerStore = create<OutlinerStore>()(
           }
 
           set({ nodes: updatedNodes });
-          setTimeout(() => focusNodeTextarea(newNodeId, "start"), 0);
+          focusNodeTextarea(newNodeId, "start");
         }
       },
 
-      handleBackspaceKey: (nodeId: string, cursorPosition: number) => {
-        const { findNode, handleDelete, findPreviousNodeInHierarchy } = get();
+      handleBackspaceKey: (nodeId: string, isEmpty: boolean) => {
+        const { findNode, handleDelete, findPreviousNodeInHierarchy, focusNodeTextarea } = get();
         const [currentNode] = findNode(nodeId);
 
         // Delete current node if it is empty and at set cursor a start of previous node
-        if (currentNode && currentNode.content === "" && cursorPosition === 0) {
+        if (currentNode && isEmpty) {
           const previousNode = findPreviousNodeInHierarchy(nodeId);
           handleDelete(nodeId);
           // Try to focus on previous node
           console.log("previousNode", previousNode);
           if (previousNode) {
             // Set timeout to allow DOM to update
-            setTimeout(() => {
-              const previousInput = document.querySelector(
-                `[data-node-id="${previousNode.id}"]`
-              ) as HTMLTextAreaElement;
-              if (previousInput) {
-                previousInput.focus();
-                previousInput.selectionStart = previousInput.value.length;
-                previousInput.selectionEnd = previousInput.value.length;
-              }
-            }, 0);
+            focusNodeTextarea(previousNode.id, "end");
           }
         }
       },
@@ -871,11 +870,13 @@ const useOutlinerStore = create<OutlinerStore>()(
       handleTabKey: (nodeId: string | null) => {
         if (!nodeId) return;
         get().indentNode(nodeId);
+        get().focusNodeTextarea(nodeId, "end");
       },
 
       handleShiftTabKey: (nodeId: string | null) => {
         if (!nodeId) return;
         get().unIndentNode(nodeId);
+        get().focusNodeTextarea(nodeId, "end");
       },
 
       handleArrowUp: (nodeId: string) => {
@@ -900,18 +901,31 @@ const useOutlinerStore = create<OutlinerStore>()(
       // Helper methods
       focusNodeTextarea: (nodeId: string, cursorPosition?: "start" | "end") => {
         setTimeout(() => {
-          const textarea = document.querySelector(
+          const parentDiv = document.querySelector(
             `[data-node-id="${nodeId}"]`
-          ) as HTMLTextAreaElement;
+          ) as HTMLElement | null;
 
-          if (textarea) {
-            textarea.focus();
-            if (cursorPosition === "start") {
-              textarea.selectionStart = 0;
-              textarea.selectionEnd = 0;
+          if (parentDiv) {
+            // Find the first contenteditable child within the parent div
+            const editable = parentDiv.querySelector(
+              '[contenteditable="true"]'
+            ) as HTMLElement | null;
+            if (editable) {
+              editable.focus();
+              const selection = window.getSelection();
+              const range = document.createRange();
+              range.selectNodeContents(editable);
+
+              if (cursorPosition === "start") {
+                range.collapse(true);
+              } else {
+                range.collapse(false);
+              }
+              selection?.removeAllRanges();
+              selection?.addRange(range);
             } else {
-              textarea.selectionStart = textarea.value.length;
-              textarea.selectionEnd = textarea.value.length;
+              // fallback: focus the parent itself if no child found
+              parentDiv.focus();
             }
           }
         }, 0);
@@ -1090,9 +1104,7 @@ const useOutlinerStore = create<OutlinerStore>()(
 
           // Focus on the first new node
           if (newNodes.length > 0) {
-            setTimeout(() => {
-              get().focusNodeTextarea(newNodes[0].id, "end");
-            }, 0);
+            get().focusNodeTextarea(newNodes[0].id, "end");
           }
         } else {
           console.log("Failed to insert nodes");
@@ -1359,9 +1371,7 @@ const useOutlinerStore = create<OutlinerStore>()(
         const previousNode = get().findPreviousNodeInHierarchy(topNodeId);
         console.log("previousNode:", previousNode);
         if (previousNode) {
-          setTimeout(() => {
-            get().focusNodeTextarea(previousNode.id, "end");
-          }, 0);
+          get().focusNodeTextarea(previousNode.id, "end");
         }
       },
 

@@ -25,9 +25,6 @@ const useOutliner = (nodeId?: string) => {
     addNodeAfter,
     handleAddChild,
     handleDelete,
-    handleEnterKey,
-    handleBackspaceKey,
-    handleTabKey,
     handleShiftTabKey,
     handleArrowDown,
     handleArrowUp,
@@ -38,68 +35,26 @@ const useOutliner = (nodeId?: string) => {
   } = useOutlinerStore();
 
   // Handle keyboard event to maintain compatibility with component props
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>, nodeId: string) => {
-      // Update active node ID on any keyboard event
+  const handleKeyDown = useCallback((nodeId: string) => {
+    // Update active node ID on any keyboard event
+    if (nodeId && activeNodeIdRef.current !== nodeId) {
       activeNodeIdRef.current = nodeId;
-    },
-    []
-  );
-  console.log("activeNodeIdRef.current", activeNodeIdRef.current);
-
-  // Handle Enter key - create new item with different behaviors based on cursor position
-  useHotkeys(
-    "enter",
-    (e) => {
-      e.preventDefault();
-      if (!activeNodeIdRef.current) return;
-
-      const targetEl = e.target as HTMLTextAreaElement;
-      const cursorPosition = targetEl.selectionStart;
-
-      handleEnterKey(activeNodeIdRef.current, cursorPosition);
-    },
-    { enableOnFormTags: ["TEXTAREA"] },
-    [handleEnterKey]
-  );
-
-  // Handle Tab key - indent (make current node child of previous node)
-  useHotkeys(
-    "tab",
-    (e) => {
-      e.preventDefault();
-      handleTabKey(activeNodeIdRef.current);
-    },
-    { enableOnFormTags: ["TEXTAREA"] },
-    [handleTabKey, activeNodeIdRef.current]
-  );
+    }
+  }, []);
 
   // Handle Shift+Tab - unindent (move to parent's level)
   useHotkeys(
     "shift+tab",
     (e) => {
       e.preventDefault();
+      if (!activeNodeIdRef.current) return;
       handleShiftTabKey(activeNodeIdRef.current);
     },
-    { enableOnFormTags: ["TEXTAREA"] },
-    [handleShiftTabKey, activeNodeIdRef.current]
-  );
-  // Handle Backspace key - delete node if empty
-  useHotkeys(
-    "backspace",
-    (e) => {
-      if (!activeNodeIdRef.current) return;
-
-      if (selectedNodeIds.length > 1) {
-        // Delete selected nodes
-        deleteSelectedNodes();
-        return;
-      }
-      const targetEl = e.target as HTMLTextAreaElement;
-      handleBackspaceKey(activeNodeIdRef.current, targetEl.selectionStart);
+    {
+      enableOnContentEditable: true,
+      enabled: true,
     },
-    { enableOnFormTags: ["TEXTAREA"] },
-    [handleBackspaceKey, activeNodeIdRef.current, selectedNodeIds]
+    [handleShiftTabKey, activeNodeIdRef.current]
   );
 
   // Handle Up Arrow - navigate to previous node
@@ -110,7 +65,10 @@ const useOutliner = (nodeId?: string) => {
       if (!activeNodeIdRef.current) return;
       handleArrowUp(activeNodeIdRef.current);
     },
-    { enableOnFormTags: ["TEXTAREA"] },
+    {
+      enableOnContentEditable: true,
+      enabled: true,
+    },
     [handleArrowUp, activeNodeIdRef.current]
   );
 
@@ -122,7 +80,10 @@ const useOutliner = (nodeId?: string) => {
       if (!activeNodeIdRef.current) return;
       handleArrowDown(activeNodeIdRef.current);
     },
-    { enableOnFormTags: ["TEXTAREA"] },
+    {
+      enableOnContentEditable: true,
+      enabled: true,
+    },
     [handleArrowDown, activeNodeIdRef.current]
   );
 
