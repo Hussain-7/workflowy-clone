@@ -52,9 +52,9 @@ const OutlinerItem: React.FC<Props> = ({
       {/* Connecting lines on left */}
       {hasChildren && (
         <div
-          className={`absolute left-2.25 top-[30px] w-5 border-l-2 border-gray-100 transition-all duration-300 ease-in-out ${
+          className={`absolute left-[11px] top-[32px] w-5 border-l-2 border-gray-100 transition-all duration-300 ease-in-out ${
             node.meta_data.isExpanded
-              ? "h-[calc(100%-30px)] opacity-100"
+              ? "h-[calc(100%-32px)] opacity-100"
               : "h-0 opacity-0"
           }`}
         ></div>

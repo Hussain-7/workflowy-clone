@@ -5,14 +5,14 @@ import StarterKit from "@tiptap/starter-kit";
 import type { OutlinerNode } from "~/store/use-outliner-store";
 import { BsTypeH1, BsTypeH2, BsTypeH3 } from "react-icons/bs";
 import { BiParagraph } from "react-icons/bi";
-import { TfiUnderline } from "react-icons/tfi";
+import { LiaUnderlineSolid } from "react-icons/lia";
 import { HiMiniItalic } from "react-icons/hi2";
 import { GrStrikeThrough } from "react-icons/gr";
-import { FaCode } from "react-icons/fa";
+import { LuCodeXml } from "react-icons/lu";
 import { AiOutlineBold } from "react-icons/ai";
 import { useEffect } from "react";
 import useOutlinerStore from "~/store/use-outliner-store";
-// define your extension array
+
 const extensions = [StarterKit];
 
 const BubbleMenuOptions = [
@@ -50,7 +50,7 @@ const BubbleMenuOptions = [
     isActive: (editor: any) => editor.isActive("bold"),
   },
   {
-    icon: <TfiUnderline className="w-4 h-4" />,
+    icon: <LiaUnderlineSolid className="w-4 h-4" />,
     label: "Underline",
     action: (editor: any) => editor.chain().focus().toggleUnderline().run(),
     isActive: (editor: any) => editor.isActive("underline"),
@@ -68,7 +68,7 @@ const BubbleMenuOptions = [
     isActive: (editor: any) => editor.isActive("strike"),
   },
   {
-    icon: <FaCode className="w-4 h-4" />,
+    icon: <LuCodeXml className="w-4 h-4" />,
     label: "Code",
     action: (editor: any) => editor.chain().focus().toggleCode().run(),
     isActive: (editor: any) => editor.isActive("code"),

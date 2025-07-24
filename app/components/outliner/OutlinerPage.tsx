@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useOutliner from "@/hooks/use-outliner";
 import OutlinerItem from "./OutlinerItem";
 import AddItemButton from "./AddItemButton";
 import useOutlinerStore from "~/store/use-outliner-store";
+import TiptapEditor from "./TiptapEditor";
+import Markdown from "react-markdown";
 
 type Props = {
   nodeId?: string;
@@ -17,9 +19,8 @@ const OutlinePage = ({ nodeId }: Props) => {
     handlePaste,
     isNodeSelected,
   } = useOutlinerStore();
-  
-  const outlineRef = useRef<HTMLDivElement>(null);
 
+  const outlineRef = useRef<HTMLDivElement>(null);
   // Global mouse handlers to ensure selection works properly
   useEffect(() => {
     const handleGlobalMouseDown = (e: MouseEvent) => {
@@ -92,7 +93,7 @@ const OutlinePage = ({ nodeId }: Props) => {
 
   const {
     nodes,
-    nodeTitle,
+    selectedNode,
     handleKeyDown,
     handleAddChild,
     handleNodeUpdate,
@@ -101,10 +102,10 @@ const OutlinePage = ({ nodeId }: Props) => {
 
   return (
     <div className="px-4 py-6 w-[90vw] md:w-[700px] my-10 mx-auto bg-white!">
-      {nodeId && (
-        <h1 className="text-2xl font-bold text-black">
-          {nodeTitle ? (
-            nodeTitle
+      {nodeId && selectedNode && (
+        <h1 className="text-2xl font-bold text-black m-0!">
+          {selectedNode.content ? (
+            <div dangerouslySetInnerHTML={{ __html: selectedNode.content }} />
           ) : (
             <div className="text-gray-600">Untitled</div>
           )}

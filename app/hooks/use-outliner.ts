@@ -99,7 +99,7 @@ const useOutliner = (nodeId?: string) => {
 
   return {
     nodes: nodeSelected?.children || nodes,
-    nodeTitle: nodeSelected?.content || "",
+    selectedNode: nodeSelected || null,
     multipleSelected: selectedNodeIds.length > 1,
     addNodeAfter,
     handleAddChild,

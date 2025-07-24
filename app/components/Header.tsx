@@ -54,9 +54,10 @@ const Header = (props: Props) => {
           <div className="flex items-center text-gray-400">
             <div key={nodeSelected?.id} className="flex items-center">
               <FiChevronRightSeparator className="w-4 h-4" />
-              <span className="mx-1.25 text-sm font-medium truncate">
-                {nodeSelected?.content}
-              </span>
+              <span
+                className="mx-1.25 text-sm font-medium truncate"
+                dangerouslySetInnerHTML={{ __html: nodeSelected?.content }}
+              ></span>
             </div>
           </div>
         )}
