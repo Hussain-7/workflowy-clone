@@ -1,18 +1,51 @@
-## Todo
+# Workflowy Clone
 
-- Implement markdown per node. (Manage proper saving)
-- SHIFT activeNodeIdRef TO zustand and manage state from there which component is selected
-- Add input box for the untitled heading when clicking on empty items.
-- Add function to fetch the tree structure for header
-- Add search feature to filter node
-- Think of other optimizations possible such as searching and finding nodes in optimal manner and all. Proper search techniques to use.
-- Managing ctrl+z state and undoing content as it is done on workflowy.
+A keyboard-friendly outliner inspired by Workflowy, built with React Router 7, React 19, TipTap, and Zustand.
 
+## What It Does
 
-## Bug Fixes
+- Create and edit nested outline items
+- Navigate and restructure nodes with keyboard shortcuts
+- Edit rich text content with TipTap
+- Persist outline state in the browser
+- Explore document views through nested routes
 
-- copying markdowns add unessary empty bullet above or below the copied markdown
-- After deletion or copying the cursor should be in expected place
-- On all functions cursor position should be properly handled.
+## Tech Stack
 
-## Features Next
+- React 19
+- React Router 7
+- TipTap
+- Zustand
+- TypeScript
+- Vite
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local app shown by Vite and start editing your outline.
+
+## Available Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run typecheck
+```
+
+## Project Status
+
+This project is an active prototype. The current focus areas are:
+
+- Better markdown handling inside nodes
+- Smarter search and tree navigation
+- Improved undo and selection behavior
+- Cleaner cursor placement after copy and delete actions
+
+## License
+
+MIT
