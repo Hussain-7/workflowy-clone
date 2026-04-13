@@ -1,6 +1,6 @@
 # Workflowy Clone
 
-A keyboard-friendly outliner inspired by Workflowy, built with React Router 7, React 19, TipTap, and Zustand.
+A keyboard-friendly outliner inspired by Workflowy, built with React Router 7, React 19, TipTap, and Zustand for fast structured note-taking.
 
 ## What It Does
 
